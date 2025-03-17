@@ -1,0 +1,201 @@
+RewriteEngine On
+
+# Redirect ke HTTPS (uncomment jika sudah menggunakan SSL)
+# RewriteCond %{HTTPS} off
+# RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Menghilangkan index.php dari URL
+RewriteCond %{THE_REQUEST} ^[A-Z]{3,9}\ /index\.php\ HTTP/
+RewriteRule ^index\.php$ / [R=301,L]
+
+# Menangani URL yang bersih untuk halaman
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^([a-zA-Z0-9-]+)/?$ index.php?page=$1 [QSA,L]
+
+# Menangani URL yang bersih untuk publikasi
+RewriteRule ^publikasi/([a-zA-Z0-9-]+)/?$ index.php?page=publikasi&slug=$1 [QSA,L]
+
+# Menangani URL yang bersih untuk dokumen
+RewriteRule ^dokumen/([a-zA-Z0-9-]+)/?$ index.php?page=dokumen&id=$1 [QSA,L]
+
+# Mencegah akses langsung ke file PHP di direktori includes, modules, dan api
+RewriteRule ^(includes|modules|api)/.*\.php$ - [F,L]
+
+# Mencegah akses langsung ke file konfigurasi
+<FilesMatch "^(config\.php|functions\.php|auth\.php)$">
+  Order Allow,Deny
+  Deny from all
+</FilesMatch>
+
+# Mencegah directory listing
+Options -Indexes
+
+# Mengatur default charset
+AddDefaultCharset UTF-8
+
+# Mengatur cache untuk file statis
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType image/jpg "access plus 1 year"
+  ExpiresByType image/jpeg "access plus 1 year"
+  ExpiresByType image/gif "access plus 1 year"
+  ExpiresByType image/png "access plus 1 year"
+  ExpiresByType image/svg+xml "access plus 1 year"
+  ExpiresByType text/css "access plus 1 month"
+  ExpiresByType text/javascript "access plus 1 month"
+  ExpiresByType application/javascript "access plus 1 month"
+  ExpiresByType application/x-javascript "access plus 1 month"
+  ExpiresByType image/x-icon "access plus 1 year"
+  ExpiresDefault "access plus 2 days"
+</IfModule>
+
+# Mengatur kompres untuk file
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/plain
+  AddOutputFilterByType DEFLATE text/html
+  AddOutputFilterByType DEFLATE text/xml
+  AddOutputFilterByType DEFLATE text/css
+  AddOutputFilterByType DEFLATE application/xml
+  AddOutputFilterByType DEFLATE application/xhtml+xml
+  AddOutputFilterByType DEFLATE application/rss+xml
+  AddOutputFilterByType DEFLATE application/javascript
+  AddOutputFilterByType DEFLATE application/x-javascript
+</IfModule>
+
+# Mengatur header keamanan
+<IfModule mod_headers.c>
+  Header set X-Content-Type-Options "nosniff"
+  Header set X-XSS-Protection "1; mode=block"
+  Header set X-Frame-Options "SAMEORIGIN"
+  Header set Referrer-Policy "strict-origin-when-cross-origin"
+  # Uncomment jika sudah menggunakan HTTPS
+  # Header set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+</IfModule>
+
+# Mencegah akses ke file .htaccess
+<Files .htaccess>
+  Order Allow,Deny
+  Deny from all
+</Files>
+
+# Mencegah akses ke file .git
+RedirectMatch 404 /\.git 
+
+# Aktifkan kompresi GZIP
+<IfModule mod_deflate.c>
+  # Compress HTML, CSS, JavaScript, Text, XML and fonts
+  AddOutputFilterByType DEFLATE application/javascript
+  AddOutputFilterByType DEFLATE application/rss+xml
+  AddOutputFilterByType DEFLATE application/vnd.ms-fontobject
+  AddOutputFilterByType DEFLATE application/x-font
+  AddOutputFilterByType DEFLATE application/x-font-opentype
+  AddOutputFilterByType DEFLATE application/x-font-otf
+  AddOutputFilterByType DEFLATE application/x-font-truetype
+  AddOutputFilterByType DEFLATE application/x-font-ttf
+  AddOutputFilterByType DEFLATE application/x-javascript
+  AddOutputFilterByType DEFLATE application/xhtml+xml
+  AddOutputFilterByType DEFLATE application/xml
+  AddOutputFilterByType DEFLATE font/opentype
+  AddOutputFilterByType DEFLATE font/otf
+  AddOutputFilterByType DEFLATE font/ttf
+  AddOutputFilterByType DEFLATE image/svg+xml
+  AddOutputFilterByType DEFLATE image/x-icon
+  AddOutputFilterByType DEFLATE text/css
+  AddOutputFilterByType DEFLATE text/html
+  AddOutputFilterByType DEFLATE text/javascript
+  AddOutputFilterByType DEFLATE text/plain
+  AddOutputFilterByType DEFLATE text/xml
+</IfModule>
+
+# Atur cache browser
+<IfModule mod_expires.c>
+  ExpiresActive On
+  
+  # Images
+  ExpiresByType image/jpeg "access plus 1 year"
+  ExpiresByType image/gif "access plus 1 year"
+  ExpiresByType image/png "access plus 1 year"
+  ExpiresByType image/webp "access plus 1 year"
+  ExpiresByType image/svg+xml "access plus 1 year"
+  ExpiresByType image/x-icon "access plus 1 year"
+  
+  # Video
+  ExpiresByType video/mp4 "access plus 1 year"
+  ExpiresByType video/mpeg "access plus 1 year"
+  
+  # CSS, JavaScript
+  ExpiresByType text/css "access plus 1 month"
+  ExpiresByType text/javascript "access plus 1 month"
+  ExpiresByType application/javascript "access plus 1 month"
+  
+  # Others
+  ExpiresByType application/pdf "access plus 1 month"
+  ExpiresByType application/x-shockwave-flash "access plus 1 month"
+</IfModule>
+
+# Disable ETags
+<IfModule mod_headers.c>
+  Header unset ETag
+</IfModule>
+FileETag None
+
+# Set security headers
+<IfModule mod_headers.c>
+  # Protect against XSS attacks
+  Header set X-XSS-Protection "1; mode=block"
+  
+  # Prevent MIME-type sniffing
+  Header set X-Content-Type-Options "nosniff"
+  
+  # Referrer policy
+  Header set Referrer-Policy "strict-origin-when-cross-origin"
+  
+  # Content Security Policy
+  # Header set Content-Security-Policy "default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com 'unsafe-inline'; img-src 'self' data:; font-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com data:;"
+</IfModule>
+
+# Atur rewrite rules
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  
+  # Redirect HTTP ke HTTPS (uncomment jika sudah menggunakan SSL)
+  # RewriteCond %{HTTPS} off
+  # RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+  
+  # Hapus trailing slash
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^(.*)/$ /$1 [L,R=301]
+  
+  # Hapus index.php dari URL
+  RewriteCond %{THE_REQUEST} ^[A-Z]{3,9}\ /index\.php\ HTTP/
+  RewriteRule ^index\.php$ / [R=301,L]
+  
+  # Rewrite untuk halaman
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^([a-zA-Z0-9-]+)$ index.php?page=$1 [L,QSA]
+  
+  # Rewrite untuk publikasi
+  RewriteRule ^publikasi/([0-9]+)/([a-zA-Z0-9-]+)$ index.php?page=publikasi&id=$1&slug=$2 [L,QSA]
+  
+  # Rewrite untuk dokumen
+  RewriteRule ^dokumen/([0-9]+)/([a-zA-Z0-9-]+)$ index.php?page=dokumen&id=$1&slug=$2 [L,QSA]
+</IfModule>
+
+# Prevent access to sensitive files
+<FilesMatch "^\.(?!well-known/)">
+  Order allow,deny
+  Deny from all
+</FilesMatch>
+
+<FilesMatch "(?:^\.|#.*#|(?:^|/)Thumbs\.db|(?:^|/)\.(?:svn|git|hg)(?:/|$)|~$|^config\.php|\.ini$|\.log$|\.sql$|\.bak$)">
+  Order allow,deny
+  Deny from all
+</FilesMatch>
+
+# Prevent directory listing
+Options -Indexes
+
+# Set default character encoding
+AddDefaultCharset UTF-8
