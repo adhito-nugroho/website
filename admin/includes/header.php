@@ -59,6 +59,15 @@ $current_action = isset($_GET['action']) ? $_GET['action'] : '';
     <!-- Summernote JS -->
     <link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-bs5.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-bs5.min.js"></script>
+    <style>
+        .dropdown-menu.show {
+            display: block;
+            z-index: 1050;
+            position: absolute;
+            top: 100%;
+            right: 0;
+        }
+    </style>
 </head>
 
 <body id="page-top">
@@ -285,3 +294,38 @@ $current_action = isset($_GET['action']) ? $_GET['action'] : '';
                             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                         </div>
                     <?php endif; ?>
+                    <script>
+                        document.addEventListener('DOMContentLoaded', function () {
+                            try {
+                                // Inisialisasi dropdown di navbar
+                                document.querySelectorAll('.dropdown-toggle').forEach(function (element) {
+                                    new bootstrap.Dropdown(element);
+                                });
+                                console.log('Dropdown initialized successfully');
+                            } catch (error) {
+                                console.error('Error initializing dropdowns:', error);
+                            }
+                        });
+                    </script>
+                    <!-- Custom JavaScript untuk dropdown user -->
+                    <script>
+                        document.addEventListener('DOMContentLoaded', function () {
+                            const userDropdown = document.getElementById('userDropdown');
+                            const dropdownMenu = document.querySelector('[aria-labelledby="userDropdown"]');
+
+                            if (userDropdown && dropdownMenu) {
+                                userDropdown.addEventListener('click', function (e) {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    dropdownMenu.classList.toggle('show');
+                                });
+
+                                // Close dropdown when clicking outside
+                                document.addEventListener('click', function (e) {
+                                    if (!userDropdown.contains(e.target) && !dropdownMenu.contains(e.target)) {
+                                        dropdownMenu.classList.remove('show');
+                                    }
+                                });
+                            }
+                        });
+                    </script>

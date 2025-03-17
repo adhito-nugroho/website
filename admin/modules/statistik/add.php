@@ -14,54 +14,10 @@ require_once ADMIN_PATH . '/includes/functions.php';
 // Cek login admin
 requireLogin();
 
-// Validasi parameter ID
-if (!isset($_GET['id']) || empty($_GET['id'])) {
-    $_SESSION['message'] = 'ID statistik tidak valid';
-    $_SESSION['message_type'] = 'danger';
-    header('Location: index.php');
-    exit;
-}
-
-$id = (int) $_GET['id'];
-
-// Ambil data statistik dari database
-try {
-    $stmt = $pdo->prepare("SELECT * FROM statistics WHERE id = ?");
-    $stmt->execute([$id]);
-    $statistic = $stmt->fetch();
-
-    if (!$statistic) {
-        $_SESSION['message'] = 'Data statistik tidak ditemukan';
-        $_SESSION['message_type'] = 'danger';
-        header('Location: index.php');
-        exit;
-    }
-} catch (PDOException $e) {
-    $_SESSION['message'] = 'Error: ' . $e->getMessage();
-    $_SESSION['message_type'] = 'danger';
-    header('Location: index.php');
-    exit;
-}
-
-// Parse JSON data
-try {
-    $data_json = json_decode($statistic['data_json'], true);
-    if (!isset($data_json['labels']) || !isset($data_json['data'])) {
-        throw new Exception('Format data JSON tidak valid');
-    }
-    $labels = $data_json['labels'];
-    $values = $data_json['data'];
-} catch (Exception $e) {
-    $labels = [];
-    $values = [];
-    $_SESSION['message'] = 'Error parsing data JSON: ' . $e->getMessage();
-    $_SESSION['message_type'] = 'warning';
-}
-
 // Inisialisasi variabel
-$title = $statistic['title'];
-$category = $statistic['category'];
-$year = $statistic['year'];
+$title = '';
+$category = '';
+$year = date('Y');
 $errors = [];
 
 // Proses form jika disubmit
@@ -117,7 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // Jika tidak ada error, update database
+    // Jika tidak ada error, simpan ke database
     if (empty($errors)) {
         try {
             // Buat JSON data
@@ -127,15 +83,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ]);
 
             $stmt = $pdo->prepare("
-                UPDATE statistics 
-                SET title = ?, category = ?, year = ?, data_json = ?, updated_at = NOW()
-                WHERE id = ?
+                INSERT INTO statistics (title, category, year, data_json, created_at, updated_at) 
+                VALUES (?, ?, ?, ?, NOW(), NOW())
             ");
 
-            $stmt->execute([$title, $category, $year, $data_json, $id]);
+            $stmt->execute([$title, $category, $year, $data_json]);
 
             // Redirect ke halaman statistik dengan pesan sukses
-            $_SESSION['message'] = 'Data statistik berhasil diperbarui';
+            $_SESSION['message'] = 'Data statistik berhasil ditambahkan';
             $_SESSION['message_type'] = 'success';
 
             header('Location: index.php');
@@ -147,7 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // Set page title
-$page_title = 'Edit Statistik';
+$page_title = 'Tambah Statistik';
 
 // Load header
 include_once ADMIN_PATH . '/includes/header.php';
@@ -159,7 +114,7 @@ include_once ADMIN_PATH . '/includes/header.php';
         <!-- Breadcrumb -->
         <div class="row page-titles">
             <div class="col-md-5 align-self-center">
-                <h4 class="text-themecolor">Edit Statistik</h4>
+                <h4 class="text-themecolor">Tambah Statistik</h4>
             </div>
             <div class="col-md-7 align-self-center text-end">
                 <div class="d-flex justify-content-end align-items-center">
@@ -167,7 +122,7 @@ include_once ADMIN_PATH . '/includes/header.php';
                         <li class="breadcrumb-item"><a
                                 href="<?php echo $site_config['admin_url']; ?>/dashboard.php">Dashboard</a></li>
                         <li class="breadcrumb-item"><a href="index.php">Statistik</a></li>
-                        <li class="breadcrumb-item active">Edit</li>
+                        <li class="breadcrumb-item active">Tambah</li>
                     </ol>
                 </div>
             </div>
@@ -189,7 +144,7 @@ include_once ADMIN_PATH . '/includes/header.php';
             <div class="col-12">
                 <div class="card">
                     <div class="card-body">
-                        <h4 class="card-title">Form Edit Statistik</h4>
+                        <h4 class="card-title">Form Tambah Statistik</h4>
                         <form action="" method="post" id="statisticForm">
                             <div class="mb-3 row">
                                 <label for="title" class="col-md-2 col-form-label">Judul Statistik <span
@@ -244,43 +199,21 @@ include_once ADMIN_PATH . '/includes/header.php';
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                <?php if (!empty($labels)): ?>
-                                                    <?php for ($i = 0; $i < count($labels); $i++): ?>
-                                                        <tr>
-                                                            <td>
-                                                                <input type="text" class="form-control" name="item_label[]"
-                                                                    value="<?php echo htmlspecialchars($labels[$i]); ?>"
-                                                                    required>
-                                                            </td>
-                                                            <td>
-                                                                <input type="number" step="0.01" class="form-control"
-                                                                    name="item_value[]" value="<?php echo $values[$i]; ?>"
-                                                                    required>
-                                                            </td>
-                                                            <td>
-                                                                <button type="button" class="btn btn-danger btn-sm remove-row">
-                                                                    <i class="fas fa-trash"></i> Hapus
-                                                                </button>
-                                                            </td>
-                                                        </tr>
-                                                    <?php endfor; ?>
-                                                <?php else: ?>
-                                                    <tr>
-                                                        <td>
-                                                            <input type="text" class="form-control" name="item_label[]"
-                                                                required>
-                                                        </td>
-                                                        <td>
-                                                            <input type="number" step="0.01" class="form-control"
-                                                                name="item_value[]" required>
-                                                        </td>
-                                                        <td>
-                                                            <button type="button" class="btn btn-danger btn-sm remove-row">
-                                                                <i class="fas fa-trash"></i> Hapus
-                                                            </button>
-                                                        </td>
-                                                    </tr>
-                                                <?php endif; ?>
+                                                <tr>
+                                                    <td>
+                                                        <input type="text" class="form-control" name="item_label[]"
+                                                            required>
+                                                    </td>
+                                                    <td>
+                                                        <input type="number" step="0.01" class="form-control"
+                                                            name="item_value[]" required>
+                                                    </td>
+                                                    <td>
+                                                        <button type="button" class="btn btn-danger btn-sm remove-row">
+                                                            <i class="fas fa-trash"></i> Hapus
+                                                        </button>
+                                                    </td>
+                                                </tr>
                                             </tbody>
                                             <tfoot>
                                                 <tr>
@@ -299,7 +232,7 @@ include_once ADMIN_PATH . '/includes/header.php';
 
                             <div class="mb-3 row">
                                 <div class="col-md-10 offset-md-2">
-                                    <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+                                    <button type="submit" class="btn btn-primary">Simpan</button>
                                     <a href="index.php" class="btn btn-secondary">Batal</a>
                                 </div>
                             </div>
@@ -429,9 +362,8 @@ include_once ADMIN_PATH . '/includes/header.php';
             previewChart.update();
         }
 
-        // Initialize preview chart with existing data
+        // Initialize preview chart
         initChart();
-        updateChartPreview();
 
         // Listen for changes in form inputs to update chart
         document.getElementById('statisticForm').addEventListener('input', updateChartPreview);
