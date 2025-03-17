@@ -70,8 +70,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $title = sanitizeInput($_POST['title'] ?? '');
     $category = sanitizeInput($_POST['category'] ?? '');
     $year = (int) ($_POST['year'] ?? date('Y'));
-
-    // Validasi
+    $unit = sanitizeInput($_POST['unit'] ?? '');
+    
+    // Validasi input
     if (empty($title)) {
         $errors[] = 'Judul statistik wajib diisi';
     }
@@ -126,13 +127,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'data' => $values
             ]);
 
+            // Update data statistik
             $stmt = $pdo->prepare("
                 UPDATE statistics 
-                SET title = ?, category = ?, year = ?, data_json = ?, updated_at = NOW()
+                SET title = ?, category = ?, year = ?, data_json = ?, unit = ?, updated_at = NOW() 
                 WHERE id = ?
             ");
-
-            $stmt->execute([$title, $category, $year, $data_json, $id]);
+            
+            $stmt->execute([$title, $category, $year, $data_json, $unit, $id]);
 
             // Redirect ke halaman statistik dengan pesan sukses
             $_SESSION['message'] = 'Data statistik berhasil diperbarui';
@@ -227,6 +229,14 @@ include_once ADMIN_PATH . '/includes/header.php';
                                                 <?php echo $y; ?></option>
                                         <?php endfor; ?>
                                     </select>
+                                </div>
+                            </div>
+
+                            <div class="mb-3 row">
+                                <label for="unit" class="col-md-2 col-form-label">Satuan</label>
+                                <div class="col-md-10">
+                                    <input type="text" class="form-control" id="unit" name="unit" value="<?php echo htmlspecialchars($unit ?? ''); ?>" placeholder="Contoh: Ha, Ton, Orang, dll">
+                                    <small class="form-text text-muted">Satuan pengukuran data (opsional)</small>
                                 </div>
                             </div>
 

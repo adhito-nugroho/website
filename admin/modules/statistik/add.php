@@ -26,8 +26,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $title = sanitizeInput($_POST['title'] ?? '');
     $category = sanitizeInput($_POST['category'] ?? '');
     $year = (int) ($_POST['year'] ?? date('Y'));
-
-    // Validasi
+    $unit = sanitizeInput($_POST['unit'] ?? '');
+    
+    // Validasi input
     if (empty($title)) {
         $errors[] = 'Judul statistik wajib diisi';
     }
@@ -82,12 +83,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'data' => $values
             ]);
 
+            // Simpan data statistik
             $stmt = $pdo->prepare("
-                INSERT INTO statistics (title, category, year, data_json, created_at, updated_at) 
-                VALUES (?, ?, ?, ?, NOW(), NOW())
+                INSERT INTO statistics (title, category, year, data_json, unit, created_at, updated_at) 
+                VALUES (?, ?, ?, ?, ?, NOW(), NOW())
             ");
-
-            $stmt->execute([$title, $category, $year, $data_json]);
+            
+            $stmt->execute([$title, $category, $year, $data_json, $unit]);
 
             // Redirect ke halaman statistik dengan pesan sukses
             $_SESSION['message'] = 'Data statistik berhasil ditambahkan';
@@ -182,6 +184,15 @@ include_once ADMIN_PATH . '/includes/header.php';
                                                 <?php echo $y; ?></option>
                                         <?php endfor; ?>
                                     </select>
+                                </div>
+                            </div>
+
+                            <div class="mb-3 row">
+                                <label for="unit" class="col-md-2 col-form-label">Satuan</label>
+                                <div class="col-md-10">
+                                    <input type="text" class="form-control" id="unit" name="unit" 
+                                        value="<?php echo htmlspecialchars($unit ?? ''); ?>" placeholder="Contoh: Ha, Ton, Orang, dll">
+                                    <small class="form-text text-muted">Satuan pengukuran data (opsional)</small>
                                 </div>
                             </div>
 
@@ -342,6 +353,7 @@ include_once ADMIN_PATH . '/includes/header.php';
 
             const labels = [];
             const values = [];
+            const unit = document.getElementById('unit').value;
 
             // Get all rows
             const rows = dataTable.rows;
@@ -359,6 +371,11 @@ include_once ADMIN_PATH . '/includes/header.php';
             // Update chart data
             previewChart.data.labels = labels;
             previewChart.data.datasets[0].data = values;
+            
+            // Update chart title with unit if available
+            const title = document.getElementById('title').value || 'Data Statistik';
+            previewChart.data.datasets[0].label = unit ? `${title} (${unit})` : title;
+            
             previewChart.update();
         }
 

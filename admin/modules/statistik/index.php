@@ -59,6 +59,16 @@ try {
     $statistics = [];
 }
 
+// Format label kategori
+$category_labels = [
+    'forest-area' => 'Luas Kawasan Hutan',
+    'forest-production' => 'Produksi Hasil Hutan',
+    'rehabilitation' => 'Rehabilitasi Hutan',
+    'social-forestry' => 'Perhutanan Sosial',
+    'forest-fire' => 'Kebakaran Hutan',
+    'other' => 'Lainnya'
+];
+
 // Generate CSRF token
 $csrf_token = generateCsrfToken();
 
@@ -113,11 +123,12 @@ include_once ADMIN_PATH . '/includes/header.php';
                                 <thead>
                                     <tr>
                                         <th width="5%">No</th>
-                                        <th width="25%">Judul</th>
+                                        <th width="20%">Judul</th>
                                         <th width="15%">Kategori</th>
                                         <th width="10%">Tahun</th>
-                                        <th width="25%">Data</th>
-                                        <th width="20%">Aksi</th>
+                                        <th width="10%">Satuan</th>
+                                        <th width="15%">Data</th>
+                                        <th width="25%">Aksi</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -126,8 +137,9 @@ include_once ADMIN_PATH . '/includes/header.php';
                                             <tr>
                                                 <td><?php echo $index + 1; ?></td>
                                                 <td><?php echo htmlspecialchars($statistic['title']); ?></td>
-                                                <td><?php echo htmlspecialchars($statistic['category']); ?></td>
+                                                <td><?php echo htmlspecialchars($category_labels[$statistic['category']] ?? $statistic['category']); ?></td>
                                                 <td><?php echo $statistic['year']; ?></td>
+                                                <td><?php echo htmlspecialchars($statistic['unit'] ?? '-'); ?></td>
                                                 <td>
                                                     <?php
                                                     try {
@@ -162,7 +174,7 @@ include_once ADMIN_PATH . '/includes/header.php';
                                         <?php endforeach; ?>
                                     <?php else: ?>
                                         <tr>
-                                            <td colspan="6" class="text-center">Tidak ada data statistik</td>
+                                            <td colspan="7" class="text-center">Tidak ada data statistik</td>
                                         </tr>
                                     <?php endif; ?>
                                 </tbody>
