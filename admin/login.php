@@ -28,11 +28,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($username) || empty($password)) {
         $error = 'Username dan password wajib diisi';
     } else {
+        // Modifikasi bagian try-catch saat verifikasi login
         try {
             // Cek username di database
             $stmt = $pdo->prepare("SELECT * FROM users WHERE username = :username");
             $stmt->execute(['username' => $username]);
             $user = $stmt->fetch();
+
+            // Tambahkan log untuk debugging
+            error_log('Login attempt for user: ' . $username);
 
             // Verifikasi user dan password
             if ($user && password_verify($password, $user['password'])) {
@@ -43,24 +47,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['admin_name'] = $user['name'];
                 $_SESSION['admin_role'] = $user['role'];
 
-                // Update last login
-                $stmt = $pdo->prepare("UPDATE users SET last_login = NOW() WHERE id = :id");
-                $stmt->execute(['id' => $user['id']]);
+                try {
+                    // Update last login dalam try-catch terpisah
+                    $stmt = $pdo->prepare("UPDATE users SET last_login = NOW() WHERE id = :id");
+                    $stmt->execute(['id' => $user['id']]);
+                } catch (PDOException $e) {
+                    // Log error tapi jangan hentikan proses login
+                    error_log('Error updating last_login: ' . $e->getMessage());
+                }
 
-                // Log aktivitas login
-                $ip_address = $_SERVER['REMOTE_ADDR'];
-                $agent = $_SERVER['HTTP_USER_AGENT'] ?? '';
+                try {
+                    // Log aktivitas login dalam try-catch terpisah
+                    $ip_address = $_SERVER['REMOTE_ADDR'];
+                    $agent = $_SERVER['HTTP_USER_AGENT'] ?? '';
 
-                $stmt = $pdo->prepare("
-                    INSERT INTO admin_logs (user_id, activity, ip_address, user_agent, created_at) 
-                    VALUES (:user_id, :activity, :ip_address, :user_agent, NOW())
-                ");
-                $stmt->execute([
-                    'user_id' => $user['id'],
-                    'activity' => 'login',
-                    'ip_address' => $ip_address,
-                    'user_agent' => $agent
-                ]);
+                    $stmt = $pdo->prepare("
+                INSERT INTO admin_logs (user_id, activity, ip_address, user_agent, created_at) 
+                VALUES (:user_id, :activity, :ip_address, :user_agent, NOW())
+            ");
+                    $stmt->execute([
+                        'user_id' => $user['id'],
+                        'activity' => 'login',
+                        'ip_address' => $ip_address,
+                        'user_agent' => $agent
+                    ]);
+                } catch (PDOException $e) {
+                    // Log error tapi jangan hentikan proses login
+                    error_log('Error logging login activity: ' . $e->getMessage());
+                }
 
                 // Redirect ke dashboard
                 header('Location: dashboard.php');
@@ -68,24 +82,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } else {
                 $error = 'Username atau password tidak valid';
 
-                // Log percobaan login gagal
-                $ip_address = $_SERVER['REMOTE_ADDR'];
-                $agent = $_SERVER['HTTP_USER_AGENT'] ?? '';
+                try {
+                    // Log percobaan login gagal dalam try-catch terpisah
+                    $ip_address = $_SERVER['REMOTE_ADDR'];
+                    $agent = $_SERVER['HTTP_USER_AGENT'] ?? '';
 
-                $stmt = $pdo->prepare("
-                    INSERT INTO login_attempts (username, ip_address, user_agent, status, created_at) 
-                    VALUES (:username, :ip_address, :user_agent, 'failed', NOW())
-                ");
-                $stmt->execute([
-                    'username' => $username,
-                    'ip_address' => $ip_address,
-                    'user_agent' => $agent
-                ]);
+                    $stmt = $pdo->prepare("
+                INSERT INTO login_attempts (username, ip_address, user_agent, status, created_at) 
+                VALUES (:username, :ip_address, :user_agent, 'failed', NOW())
+            ");
+                    $stmt->execute([
+                        'username' => $username,
+                        'ip_address' => $ip_address,
+                        'user_agent' => $agent
+                    ]);
+                } catch (PDOException $e) {
+                    // Log error tapi jangan hentikan proses
+                    error_log('Error logging failed login attempt: ' . $e->getMessage());
+                }
             }
         } catch (PDOException $e) {
             $error = 'Terjadi kesalahan sistem. Silakan coba lagi nanti.';
-            // Log error
-            error_log('Login Error: ' . $e->getMessage());
+            // Log error dengan detail lebih lengkap
+            error_log('Login Error (PDO Exception): ' . $e->getMessage() . ' - SQL State: ' . $e->getCode());
         }
     }
 }
