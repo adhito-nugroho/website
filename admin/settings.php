@@ -256,8 +256,8 @@ include_once ADMIN_PATH . '/includes/header.php';
             <div class="col-md-7 align-self-center text-end">
                 <div class="d-flex justify-content-end align-items-center">
                     <ol class="breadcrumb">
-                        <li class="breadcrumb-item">
-                            href="<?php echo $site_config['admin_url']; ?>/dashboard.php">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a
+                                href="<?php echo $site_config['admin_url']; ?>/dashboard.php">Dashboard</a></li>
                         <li class="breadcrumb-item active">Pengaturan</li>
                     </ol>
                 </div>
