@@ -1,22 +1,22 @@
 <?php
 // Memastikan file ini tidak diakses langsung
 if (!defined('BASE_PATH')) {
-    http_response_code(403);
-    exit('Akses langsung ke file ini tidak diperbolehkan');
+  http_response_code(403);
+  exit('Akses langsung ke file ini tidak diperbolehkan');
 }
 
 // Ambil data wilayah kerja
 $work_areas = [];
 try {
-    $stmt = $pdo->query("SELECT * FROM work_areas WHERE is_active = 1 ORDER BY name");
-    $work_areas = $stmt->fetchAll();
+  $stmt = $pdo->query("SELECT * FROM work_areas WHERE is_active = 1 ORDER BY name");
+  $work_areas = $stmt->fetchAll();
 } catch (PDOException $e) {
-    error_log('Error getting work areas: ' . $e->getMessage());
+  error_log('Error getting work areas: ' . $e->getMessage());
 }
 
 // Pastikan $work_areas adalah array
 if (!is_array($work_areas)) {
-    $work_areas = [];
+  $work_areas = [];
 }
 ?>
 
@@ -34,22 +34,21 @@ if (!is_array($work_areas)) {
       <div class="col-lg-6" data-aos="fade-right">
         <div class="profile-image">
           <img src="assets/images/kantor-cdk.jpg" alt="Kantor CDK Bojonegoro" class="img-fluid rounded-lg shadow-lg">
-          <div class="profile-experience">
-            <span class="years">30+</span>
-            <span class="text">Tahun Pengalaman</span>
-          </div>
         </div>
       </div>
       <div class="col-lg-6" data-aos="fade-left">
         <div class="profile-content">
           <h3>Cabang Dinas Kehutanan Wilayah Bojonegoro</h3>
           <p class="lead">
-            Unit Pelaksana Teknis Dinas Kehutanan Provinsi Jawa Timur yang melaksanakan kebijakan teknis operasional di bidang kehutanan.
+            Unit Pelaksana Teknis Dinas Kehutanan Provinsi Jawa Timur yang melaksanakan kebijakan teknis operasional di
+            bidang kehutanan.
           </p>
           <p>
-            CDK Wilayah Bojonegoro memiliki tugas melaksanakan sebagian tugas Dinas Kehutanan Provinsi Jawa Timur di bidang kehutanan meliputi perencanaan, pemanfaatan, rehabilitasi, perlindungan, konservasi, dan pemberdayaan masyarakat di wilayah kerjanya.
+            CDK Wilayah Bojonegoro memiliki tugas melaksanakan sebagian tugas Dinas Kehutanan Provinsi Jawa Timur di
+            bidang kehutanan meliputi perencanaan, pemanfaatan, rehabilitasi, perlindungan, konservasi, dan pemberdayaan
+            masyarakat di wilayah kerjanya.
           </p>
-          
+
           <div class="profile-features">
             <div class="feature-item">
               <i class="ri-check-double-line"></i>
@@ -75,29 +74,5 @@ if (!is_array($work_areas)) {
         </div>
       </div>
     </div>
-
-    <!-- Wilayah Kerja -->
-    <div class="work-areas mt-5" data-aos="fade-up">
-      <h3 class="text-center mb-4">Wilayah Kerja</h3>
-      <div class="row">
-        <div class="col-lg-6">
-          <div class="work-areas-map">
-            <div id="map" style="height: 400px;"></div>
-          </div>
-        </div>
-        <div class="col-lg-6">
-          <div class="work-areas-list">
-            <div class="list-group">
-              <?php foreach ($work_areas as $area): ?>
-                <div class="list-group-item list-group-item-action d-flex align-items-center">
-                  <i class="ri-map-pin-line me-3 text-primary"></i>
-                  <span><?php echo htmlspecialchars($area['name']); ?></span>
-                </div>
-              <?php endforeach; ?>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
   </div>
-</section> 
+</section>

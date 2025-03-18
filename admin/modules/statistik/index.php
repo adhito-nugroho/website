@@ -14,9 +14,31 @@ require_once ADMIN_PATH . '/includes/functions.php';
 // Cek login admin
 requireLogin();
 
-// Tambahkan, edit, atau hapus data jika ada request
+// Set judul halaman
+$page_title = 'Manajemen Statistik';
+
+// Inisialisasi variabel
 $message = '';
 $message_type = '';
+
+// Check for message from session
+if (isset($_SESSION['success_message'])) {
+    $message = $_SESSION['success_message'];
+    $message_type = 'success';
+    // Clear message after use
+    unset($_SESSION['success_message']);
+} elseif (isset($_SESSION['error_message'])) {
+    $message = $_SESSION['error_message'];
+    $message_type = 'danger';
+    // Clear message after use
+    unset($_SESSION['error_message']);
+}
+
+// Check for message from redirect
+if (isset($_GET['message']) && !empty($_GET['message'])) {
+    $message = $_GET['message'];
+    $message_type = $_GET['message_type'] ?? 'success';
+}
 
 // Proses hapus data
 if (isset($_GET['action']) && $_GET['action'] == 'delete' && isset($_GET['id'])) {
@@ -28,7 +50,7 @@ if (isset($_GET['action']) && $_GET['action'] == 'delete' && isset($_GET['id']))
             throw new Exception('Token keamanan tidak valid');
         }
 
-        // Periksa apakah statistik ada
+        // Periksa apakah data statistik ada
         $stmt = $pdo->prepare("SELECT * FROM statistics WHERE id = ?");
         $stmt->execute([$id]);
         $statistic = $stmt->fetch();
@@ -37,12 +59,19 @@ if (isset($_GET['action']) && $_GET['action'] == 'delete' && isset($_GET['id']))
             throw new Exception('Data statistik tidak ditemukan');
         }
 
-        // Hapus statistik
+        // Hapus data statistik
         $stmt = $pdo->prepare("DELETE FROM statistics WHERE id = ?");
         $stmt->execute([$id]);
 
-        $message = 'Data statistik berhasil dihapus';
-        $message_type = 'success';
+        // Catat aktivitas admin
+        logAdminActivity($_SESSION['user_id'], 'delete', $id, 'Menghapus data statistik');
+
+        // Set success message in session
+        $_SESSION['success_message'] = 'Data statistik berhasil dihapus';
+
+        // Redirect to refresh page (to avoid resubmission on refresh)
+        header('Location: index.php');
+        exit;
     } catch (Exception $e) {
         $message = 'Error: ' . $e->getMessage();
         $message_type = 'danger';
@@ -59,21 +88,8 @@ try {
     $statistics = [];
 }
 
-// Format label kategori
-$category_labels = [
-    'forest-area' => 'Luas Kawasan Hutan',
-    'forest-production' => 'Produksi Hasil Hutan',
-    'rehabilitation' => 'Rehabilitasi Hutan',
-    'social-forestry' => 'Perhutanan Sosial',
-    'forest-fire' => 'Kebakaran Hutan',
-    'other' => 'Lainnya'
-];
-
 // Generate CSRF token
 $csrf_token = generateCsrfToken();
-
-// Set page title
-$page_title = 'Manajemen Statistik';
 
 // Load header
 include_once ADMIN_PATH . '/includes/header.php';
@@ -123,12 +139,12 @@ include_once ADMIN_PATH . '/includes/header.php';
                                 <thead>
                                     <tr>
                                         <th width="5%">No</th>
-                                        <th width="20%">Judul</th>
+                                        <th width="30%">Judul</th>
                                         <th width="15%">Kategori</th>
                                         <th width="10%">Tahun</th>
                                         <th width="10%">Satuan</th>
-                                        <th width="15%">Data</th>
-                                        <th width="25%">Aksi</th>
+                                        <th width="15%">Tanggal Dibuat</th>
+                                        <th width="15%">Aksi</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -137,23 +153,10 @@ include_once ADMIN_PATH . '/includes/header.php';
                                             <tr>
                                                 <td><?php echo $index + 1; ?></td>
                                                 <td><?php echo htmlspecialchars($statistic['title']); ?></td>
-                                                <td><?php echo htmlspecialchars($category_labels[$statistic['category']] ?? $statistic['category']); ?></td>
+                                                <td><?php echo htmlspecialchars($statistic['category']); ?></td>
                                                 <td><?php echo $statistic['year']; ?></td>
-                                                <td><?php echo htmlspecialchars($statistic['unit'] ?? '-'); ?></td>
-                                                <td>
-                                                    <?php
-                                                    try {
-                                                        $data = json_decode($statistic['data_json'], true);
-                                                        if (is_array($data) && isset($data['labels']) && isset($data['data'])) {
-                                                            echo count($data['labels']) . ' item data';
-                                                        } else {
-                                                            echo 'Format data tidak valid';
-                                                        }
-                                                    } catch (Exception $e) {
-                                                        echo 'Error: ' . $e->getMessage();
-                                                    }
-                                                    ?>
-                                                </td>
+                                                <td><?php echo htmlspecialchars($statistic['unit'] ?? 'Tidak ada'); ?></td>
+                                                <td><?php echo date('d/m/Y', strtotime($statistic['created_at'])); ?></td>
                                                 <td>
                                                     <a href="view.php?id=<?php echo $statistic['id']; ?>"
                                                         class="btn btn-sm btn-info" title="Lihat">
@@ -211,23 +214,42 @@ include_once ADMIN_PATH . '/includes/header.php';
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         // Konfigurasi modal konfirmasi hapus
-        const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
-        const deleteButtons = document.querySelectorAll('.btn-delete');
+        const deleteModalElement = document.getElementById('deleteModal');
+        if (deleteModalElement) {
+            const deleteModal = new bootstrap.Modal(deleteModalElement);
+            const deleteButtons = document.querySelectorAll('.btn-delete');
 
-        deleteButtons.forEach(function (button) {
-            button.addEventListener('click', function (e) {
-                e.preventDefault();
+            deleteButtons.forEach(function (button) {
+                button.addEventListener('click', function (e) {
+                    e.preventDefault();
 
-                const id = this.getAttribute('data-id');
-                const name = this.getAttribute('data-name');
-                const token = this.getAttribute('data-token');
+                    const id = this.getAttribute('data-id');
+                    const name = this.getAttribute('data-name');
+                    const token = this.getAttribute('data-token');
 
-                document.getElementById('delete-name').textContent = name;
-                document.getElementById('delete-link').href = `index.php?action=delete&id=${id}&token=${token}`;
+                    document.getElementById('delete-name').textContent = name;
+                    document.getElementById('delete-link').href = `index.php?action=delete&id=${id}&token=${token}`;
 
-                deleteModal.show();
+                    deleteModal.show();
+                });
             });
-        });
+        }
+
+        // Auto-hide alert after 5 seconds
+        const alertElement = document.querySelector('.alert');
+        if (alertElement) {
+            setTimeout(function () {
+                const alert = bootstrap.Alert.getInstance(alertElement);
+                if (alert) {
+                    alert.close();
+                } else {
+                    alertElement.classList.remove('show');
+                    setTimeout(function () {
+                        alertElement.remove();
+                    }, 150);
+                }
+            }, 5000);
+        }
     });
 </script>
 
