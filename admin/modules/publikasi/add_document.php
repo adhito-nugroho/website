@@ -25,117 +25,107 @@ $upload_date = date('Y-m-d');
 $is_active = 1;
 $errors = [];
 
-// Remove CSRF token generation
-// $csrf_token = generateCsrfToken();
+// Generate CSRF token
+$csrf_token = generateCsrfToken();
 
 // Proses form jika disubmit
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Remove CSRF token validation
-    // if (!isset($_POST['csrf_token']) || !verifyCsrfToken($_POST['csrf_token'])) {
-    //     $errors[] = 'Token keamanan tidak valid';
-    // }
-    
-    // Continue with form processing
-    if (!isset($_POST['csrf_token']) || !verifyCsrfToken($_POST['csrf_token'])) {
-        $errors[] = 'Token keamanan tidak valid';
+    // Sanitasi dan validasi input
+    $title = sanitizeInput($_POST['title'] ?? '');
+    $category = sanitizeInput($_POST['category'] ?? '');
+    $description = sanitizeInput($_POST['description'] ?? '');
+    $upload_date = sanitizeInput($_POST['upload_date'] ?? '');
+    $is_active = isset($_POST['is_active']) ? 1 : 0;
+
+    // Validasi
+    if (empty($title)) {
+        $errors[] = 'Judul dokumen wajib diisi';
+    }
+
+    if (empty($category)) {
+        $errors[] = 'Kategori dokumen wajib diisi';
+    }
+
+    if (empty($upload_date)) {
+        $errors[] = 'Tanggal upload wajib diisi';
+    } elseif (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $upload_date)) {
+        $errors[] = 'Format tanggal upload tidak valid (YYYY-MM-DD)';
+    }
+
+    // Cek file dokumen
+    if (!isset($_FILES['document']) || $_FILES['document']['error'] != 0) {
+        $errors[] = 'File dokumen wajib diupload';
     } else {
-        // Sanitasi dan validasi input
-        $title = sanitizeInput($_POST['title'] ?? '');
-        $category = sanitizeInput($_POST['category'] ?? '');
-        $description = sanitizeInput($_POST['description'] ?? '');
-        $upload_date = sanitizeInput($_POST['upload_date'] ?? '');
-        $is_active = isset($_POST['is_active']) ? 1 : 0;
+        // Validasi tipe file
+        $allowed_types = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt'];
+        $file_ext = strtolower(pathinfo($_FILES['document']['name'], PATHINFO_EXTENSION));
 
-        // Validasi
-        if (empty($title)) {
-            $errors[] = 'Judul dokumen wajib diisi';
+        if (!in_array($file_ext, $allowed_types)) {
+            $errors[] = 'Tipe file tidak diizinkan. Tipe yang diizinkan: ' . implode(', ', $allowed_types);
         }
 
-        if (empty($category)) {
-            $errors[] = 'Kategori dokumen wajib diisi';
+        // Validasi ukuran file (max 10MB)
+        if ($_FILES['document']['size'] > 10 * 1024 * 1024) {
+            $errors[] = 'Ukuran file terlalu besar. Maksimal 10MB';
         }
+    }
 
-        if (empty($upload_date)) {
-            $errors[] = 'Tanggal upload wajib diisi';
-        } elseif (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $upload_date)) {
-            $errors[] = 'Format tanggal upload tidak valid (YYYY-MM-DD)';
-        }
+    // Jika tidak ada error, simpan ke database
+    if (empty($errors)) {
+        try {
+            // Upload file dokumen
+            $upload_dir = BASE_PATH . '/uploads/dokumen';
 
-        // Cek file dokumen
-        if (!isset($_FILES['document']) || $_FILES['document']['error'] != 0) {
-            $errors[] = 'File dokumen wajib diupload';
-        } else {
-            // Validasi tipe file
-            $allowed_types = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt'];
-            $file_ext = strtolower(pathinfo($_FILES['document']['name'], PATHINFO_EXTENSION));
-
-            if (!in_array($file_ext, $allowed_types)) {
-                $errors[] = 'Tipe file tidak diizinkan. Tipe yang diizinkan: ' . implode(', ', $allowed_types);
+            // Buat direktori jika belum ada
+            if (!is_dir($upload_dir)) {
+                mkdir($upload_dir, 0755, true);
             }
 
-            // Validasi ukuran file (max 10MB)
-            if ($_FILES['document']['size'] > 10 * 1024 * 1024) {
-                $errors[] = 'Ukuran file terlalu besar. Maksimal 10MB';
+            // Buat nama file yang unik
+            $filename = time() . '_' . uniqid() . '.' . $file_ext;
+            $upload_path = $upload_dir . '/' . $filename;
+
+            // Pindahkan file
+            if (move_uploaded_file($_FILES['document']['tmp_name'], $upload_path)) {
+                // Simpan data ke database
+                $stmt = $pdo->prepare("
+                    INSERT INTO documents (
+                        title, filename, file_type, file_size, category, description, 
+                        upload_date, is_active, created_by, created_at, updated_at
+                    ) VALUES (
+                        ?, ?, ?, ?, ?, ?, 
+                        ?, ?, ?, NOW(), NOW()
+                    )
+                ");
+
+                $stmt->execute([
+                    $title,
+                    $filename,
+                    $file_ext,
+                    $_FILES['document']['size'],
+                    $category,
+                    $description,
+                    $upload_date,
+                    $is_active,
+                    $_SESSION['admin_id']
+                ]);
+
+                // Log aktivitas
+                logActivity($_SESSION['admin_id'], 'menambah dokumen baru', [
+                    'title' => $title,
+                    'category' => $category
+                ]);
+
+                // Redirect ke halaman dokumen dengan pesan sukses
+                $_SESSION['success_message'] = 'Dokumen berhasil ditambahkan';
+
+                header('Location: index.php?tab=documents');
+                exit;
+            } else {
+                $errors[] = 'Gagal mengupload file dokumen';
             }
-        }
-
-        // Jika tidak ada error, simpan ke database
-        if (empty($errors)) {
-            try {
-                // Upload file dokumen
-                $upload_dir = BASE_PATH . '/uploads/dokumen';
-
-                // Buat direktori jika belum ada
-                if (!is_dir($upload_dir)) {
-                    mkdir($upload_dir, 0755, true);
-                }
-
-                // Buat nama file yang unik
-                $filename = time() . '_' . uniqid() . '.' . $file_ext;
-                $upload_path = $upload_dir . '/' . $filename;
-
-                // Pindahkan file
-                if (move_uploaded_file($_FILES['document']['tmp_name'], $upload_path)) {
-                    // Simpan data ke database
-                    $stmt = $pdo->prepare("
-                        INSERT INTO documents (
-                            title, filename, file_type, file_size, category, description, 
-                            upload_date, is_active, created_by, created_at, updated_at
-                        ) VALUES (
-                            ?, ?, ?, ?, ?, ?, 
-                            ?, ?, ?, NOW(), NOW()
-                        )
-                    ");
-
-                    $stmt->execute([
-                        $title,
-                        $filename,
-                        $file_ext,
-                        $_FILES['document']['size'],
-                        $category,
-                        $description,
-                        $upload_date,
-                        $is_active,
-                        $_SESSION['admin_id']
-                    ]);
-
-                    // Log aktivitas
-                    logActivity($_SESSION['admin_id'], 'menambah dokumen baru', [
-                        'title' => $title,
-                        'category' => $category
-                    ]);
-
-                    // Redirect ke halaman dokumen dengan pesan sukses
-                    $_SESSION['success_message'] = 'Dokumen berhasil ditambahkan';
-
-                    header('Location: index.php?tab=documents');
-                    exit;
-                } else {
-                    $errors[] = 'Gagal mengupload file dokumen';
-                }
-            } catch (PDOException $e) {
-                $errors[] = 'Error database: ' . $e->getMessage();
-            }
+        } catch (PDOException $e) {
+            $errors[] = 'Error database: ' . $e->getMessage();
         }
     }
 }
@@ -182,9 +172,9 @@ include_once ADMIN_PATH . '/includes/header.php';
                     <div class="card-body">
                         <h4 class="card-title">Form Tambah Dokumen</h4>
                         <form action="" method="post" enctype="multipart/form-data">
-                            <!-- Remove CSRF token hidden field -->
-                            <!-- <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>"> -->
-                            
+                            <!-- Add CSRF token hidden field back -->
+                            <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
+
                             <div class="mb-3 row">
                                 <label for="title" class="col-md-2 col-form-label">Judul Dokumen <span
                                         class="text-danger">*</span></label>

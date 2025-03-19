@@ -27,117 +27,107 @@ $is_featured = 0;
 $is_active = 1;
 $errors = [];
 
-// Remove CSRF token generation
-// $csrf_token = generateCsrfToken();
+// Generate CSRF token
+$csrf_token = generateCsrfToken();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Remove CSRF token validation
-    // if (!isset($_POST['csrf_token']) || !verifyCsrfToken($_POST['csrf_token'])) {
-    //     $errors[] = 'Token keamanan tidak valid';
-    // }
-    
-    // Continue with form processing
-    if (!isset($_POST['csrf_token']) || !verifyCsrfToken($_POST['csrf_token'])) {
-        $errors[] = 'Token keamanan tidak valid';
+    // Sanitasi dan validasi input
+    $title = sanitizeInput($_POST['title'] ?? '');
+    $slug = sanitizeInput($_POST['slug'] ?? '');
+    $category = sanitizeInput($_POST['category'] ?? '');
+    $content = $_POST['content'] ?? ''; // Tidak di-sanitize karena berisi HTML
+    $publish_date = sanitizeInput($_POST['publish_date'] ?? '');
+    $is_featured = isset($_POST['is_featured']) ? 1 : 0;
+    $is_active = isset($_POST['is_active']) ? 1 : 0;
+
+    // Validasi
+    if (empty($title)) {
+        $errors[] = 'Judul berita/artikel wajib diisi';
+    }
+
+    if (empty($category)) {
+        $errors[] = 'Kategori berita/artikel wajib diisi';
+    }
+
+    if (empty($content)) {
+        $errors[] = 'Konten berita/artikel wajib diisi';
+    }
+
+    if (empty($publish_date)) {
+        $errors[] = 'Tanggal publikasi wajib diisi';
+    } elseif (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $publish_date)) {
+        $errors[] = 'Format tanggal publikasi tidak valid (YYYY-MM-DD)';
+    }
+
+    // Buat slug dari judul jika slug kosong
+    if (empty($slug)) {
+        $slug = createSlug($title);
     } else {
-        // Sanitasi dan validasi input
-        $title = sanitizeInput($_POST['title'] ?? '');
-        $slug = sanitizeInput($_POST['slug'] ?? '');
-        $category = sanitizeInput($_POST['category'] ?? '');
-        $content = $_POST['content'] ?? ''; // Tidak di-sanitize karena berisi HTML
-        $publish_date = sanitizeInput($_POST['publish_date'] ?? '');
-        $is_featured = isset($_POST['is_featured']) ? 1 : 0;
-        $is_active = isset($_POST['is_active']) ? 1 : 0;
+        $slug = createSlug($slug);
+    }
 
-        // Validasi
-        if (empty($title)) {
-            $errors[] = 'Judul berita/artikel wajib diisi';
-        }
+    // Cek apakah slug sudah digunakan
+    $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM posts WHERE slug = ?");
+    $stmt->execute([$slug]);
+    if ($stmt->fetch()['count'] > 0) {
+        $errors[] = 'Slug sudah digunakan, silakan gunakan slug lain';
+    }
 
-        if (empty($category)) {
-            $errors[] = 'Kategori berita/artikel wajib diisi';
-        }
+    // Proses upload gambar jika ada
+    $image_filename = '';
+    if (isset($_FILES['image']) && $_FILES['image']['error'] == 0) {
+        $upload_result = uploadImage($_FILES['image'], 'uploads/publikasi');
 
-        if (empty($content)) {
-            $errors[] = 'Konten berita/artikel wajib diisi';
-        }
-
-        if (empty($publish_date)) {
-            $errors[] = 'Tanggal publikasi wajib diisi';
-        } elseif (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $publish_date)) {
-            $errors[] = 'Format tanggal publikasi tidak valid (YYYY-MM-DD)';
-        }
-
-        // Buat slug dari judul jika slug kosong
-        if (empty($slug)) {
-            $slug = createSlug($title);
+        if (!$upload_result['status']) {
+            $errors[] = 'Error upload gambar: ' . $upload_result['message'];
         } else {
-            $slug = createSlug($slug);
+            $image_filename = $upload_result['filename'];
         }
+    }
 
-        // Cek apakah slug sudah digunakan
-        $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM posts WHERE slug = ?");
-        $stmt->execute([$slug]);
-        if ($stmt->fetch()['count'] > 0) {
-            $errors[] = 'Slug sudah digunakan, silakan gunakan slug lain';
-        }
+    // Jika tidak ada error, simpan ke database
+    if (empty($errors)) {
+        try {
+            $stmt = $pdo->prepare("
+                INSERT INTO posts (
+                    title, slug, category, content, image, 
+                    publish_date, is_featured, is_active, created_by, created_at, updated_at
+                ) VALUES (
+                    ?, ?, ?, ?, ?, 
+                    ?, ?, ?, ?, NOW(), NOW()
+                )
+            ");
 
-        // Proses upload gambar jika ada
-        $image_filename = '';
-        if (isset($_FILES['image']) && $_FILES['image']['error'] == 0) {
-            $upload_result = uploadImage($_FILES['image'], 'uploads/publikasi');
+            $stmt->execute([
+                $title,
+                $slug,
+                $category,
+                $content,
+                $image_filename,
+                $publish_date,
+                $is_featured,
+                $is_active,
+                $_SESSION['admin_id']
+            ]);
 
-            if (!$upload_result['status']) {
-                $errors[] = 'Error upload gambar: ' . $upload_result['message'];
-            } else {
-                $image_filename = $upload_result['filename'];
+            // Log aktivitas
+            logActivity($_SESSION['admin_id'], 'menambah berita/artikel baru', [
+                'title' => $title,
+                'category' => $category
+            ]);
+
+            // Redirect ke halaman publikasi dengan pesan sukses
+            $_SESSION['success_message'] = 'Berita/artikel berhasil ditambahkan';
+
+            header('Location: index.php?tab=posts');
+            exit;
+        } catch (PDOException $e) {
+            // Jika error, hapus gambar yang sudah diupload (jika ada)
+            if (!empty($image_filename)) {
+                deleteImage($image_filename, 'uploads/publikasi');
             }
-        }
 
-        // Jika tidak ada error, simpan ke database
-        if (empty($errors)) {
-            try {
-                $stmt = $pdo->prepare("
-                    INSERT INTO posts (
-                        title, slug, category, content, image, 
-                        publish_date, is_featured, is_active, created_by, created_at, updated_at
-                    ) VALUES (
-                        ?, ?, ?, ?, ?, 
-                        ?, ?, ?, ?, NOW(), NOW()
-                    )
-                ");
-
-                $stmt->execute([
-                    $title,
-                    $slug,
-                    $category,
-                    $content,
-                    $image_filename,
-                    $publish_date,
-                    $is_featured,
-                    $is_active,
-                    $_SESSION['admin_id']
-                ]);
-
-                // Log aktivitas
-                logActivity($_SESSION['admin_id'], 'menambah berita/artikel baru', [
-                    'title' => $title,
-                    'category' => $category
-                ]);
-
-                // Redirect ke halaman publikasi dengan pesan sukses
-                $_SESSION['success_message'] = 'Berita/artikel berhasil ditambahkan';
-
-                header('Location: index.php?tab=posts');
-                exit;
-            } catch (PDOException $e) {
-                // Jika error, hapus gambar yang sudah diupload (jika ada)
-                if (!empty($image_filename)) {
-                    deleteImage($image_filename, 'uploads/publikasi');
-                }
-
-                $errors[] = 'Error database: ' . $e->getMessage();
-            }
+            $errors[] = 'Error database: ' . $e->getMessage();
         }
     }
 }
@@ -184,9 +174,9 @@ include_once ADMIN_PATH . '/includes/header.php';
                     <div class="card-body">
                         <h4 class="card-title">Form Tambah Berita/Artikel</h4>
                         <form action="" method="post" enctype="multipart/form-data">
-                            <!-- Remove CSRF token hidden field -->
-                            <!-- <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>"> -->
-                            
+                            <!-- Add CSRF token hidden field back -->
+                            <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
+
                             <div class="mb-3 row">
                                 <label for="title" class="col-md-2 col-form-label">Judul <span
                                         class="text-danger">*</span></label>
