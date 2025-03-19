@@ -11,7 +11,7 @@
  Target Server Version : 80030
  File Encoding         : 65001
 
- Date: 18/03/2025 04:56:58
+ Date: 19/03/2025 13:51:38
 */
 
 SET NAMES utf8mb4;
@@ -31,7 +31,7 @@ CREATE TABLE `achievements`  (
   `created_at` timestamp(0) NULL DEFAULT CURRENT_TIMESTAMP(0),
   `updated_at` timestamp(0) NULL DEFAULT CURRENT_TIMESTAMP(0) ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 5 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of achievements
@@ -74,7 +74,7 @@ CREATE TABLE `admin_logs`  (
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `admin_id`(`admin_id`) USING BTREE,
   CONSTRAINT `admin_logs_ibfk_1` FOREIGN KEY (`admin_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of admin_logs
@@ -153,7 +153,7 @@ CREATE TABLE `messages`  (
   `ip_address` varchar(45) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
   `created_at` timestamp(0) NULL DEFAULT CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 5 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of messages
@@ -162,6 +162,34 @@ INSERT INTO `messages` VALUES (1, 'Test User', 'test@example.com', '123456789', 
 INSERT INTO `messages` VALUES (3, 'Test User 2025-03-17 09:42:12', 'test@example.com', '123456789', 'Test', 'Ini adalah pesan test insert langsung pada 2025-03-17 09:42:12', 'unread', '::1', '2025-03-17 09:42:12');
 INSERT INTO `messages` VALUES (4, 'Manual Test User', 'manual@test.com', '987654321', 'Test', 'Pesan test manual', 'unread', '::1', '2025-03-17 09:42:12');
 INSERT INTO `messages` VALUES (5, 'adhito nugroho', 'dtfans2@gmail.com', '1234565', 'Pengaduan', '12345654654654654654654654', 'unread', '::1', '2025-03-17 10:04:46');
+
+-- ----------------------------
+-- Table structure for monitoring
+-- ----------------------------
+DROP TABLE IF EXISTS `monitoring`;
+CREATE TABLE `monitoring`  (
+  `id` int(0) NOT NULL AUTO_INCREMENT,
+  `date` date NOT NULL,
+  `location` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `activity` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `status` enum('pending','in_progress','completed','cancelled') CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT 'pending',
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL,
+  `result` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL,
+  `notes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL,
+  `created_by` int(0) NULL DEFAULT NULL,
+  `created_at` timestamp(0) NULL DEFAULT CURRENT_TIMESTAMP(0),
+  `updated_at` timestamp(0) NULL DEFAULT CURRENT_TIMESTAMP(0) ON UPDATE CURRENT_TIMESTAMP(0),
+  PRIMARY KEY (`id`) USING BTREE,
+  INDEX `created_by`(`created_by`) USING BTREE,
+  CONSTRAINT `monitoring_ibfk_1` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE RESTRICT
+) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of monitoring
+-- ----------------------------
+INSERT INTO `monitoring` VALUES (1, '2025-03-15', 'Hutan Lindung Bojonegoro', 'Patroli Pengamanan Hutan', 'completed', 'Patroli rutin untuk mengawasi kegiatan di kawasan hutan lindung', 'Tidak ditemukan aktivitas ilegal', 'Perlu meningkatkan frekuensi patroli pada malam hari', 2, '2025-03-18 10:00:00', '2025-03-18 10:00:00');
+INSERT INTO `monitoring` VALUES (2, '2025-03-16', 'Kawasan Rehabilitasi Tuban', 'Monitoring Penanaman', 'in_progress', 'Pemantauan perkembangan bibit yang ditanam pada program rehabilitasi', 'Tingkat pertumbuhan bibit mencapai 85%', 'Beberapa area memerlukan penyiraman tambahan', 2, '2025-03-18 10:05:00', '2025-03-18 10:05:00');
+INSERT INTO `monitoring` VALUES (3, '2025-03-17', 'Persemaian Permanen Lamongan', 'Evaluasi Pembibitan', 'completed', 'Evaluasi kualitas bibit di persemaian permanen', 'pada saat kunjungan ulang', 'Jadwalkan kunjungan ulang minggu depan', 2, '2025-03-18 10:10:00', '2025-03-18 09:10:18');
 
 -- ----------------------------
 -- Table structure for pengaturan
@@ -175,7 +203,7 @@ CREATE TABLE `pengaturan`  (
   `updated_at` timestamp(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `key`(`key`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 7 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 6 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of pengaturan
@@ -214,10 +242,10 @@ CREATE TABLE `posts`  (
 -- ----------------------------
 -- Records of posts
 -- ----------------------------
-INSERT INTO `posts` VALUES (1, 'Penanaman 10.000 Bibit Pohon di Kawasan Hutan Lindung', 'penanaman-10000-bibit-pohon', 'Program', '<p>Program penanaman pohon sebagai upaya rehabilitasi hutan dan lahan kritis telah dilaksanakan dengan melibatkan masyarakat sekitar hutan dan stakeholder terkait.</p><p>Kegiatan ini bertujuan untuk meningkatkan tutupan lahan dan memperbaiki fungsi hutan sebagai penyangga sumber daya air. Sebanyak 10.000 bibit pohon jenis endemik dan bernilai ekonomi tinggi telah ditanam pada areal seluas 50 hektar.</p>', '1742161244_67d7455ce6d29.jpeg', '2025-02-12', 1, 1, 0, NULL, '2025-03-15 21:31:58', '2025-03-17 04:40:44');
-INSERT INTO `posts` VALUES (2, 'Penguatan Kelembagaan Kelompok Tani Hutan', 'penguatan-kelembagaan-kelompok-tani', 'Pemberdayaan', '<p>Kegiatan penguatan kelembagaan kelompok tani hutan melalui pelatihan manajemen organisasi dan pengembangan usaha produktif berbasis hasil hutan.</p><p>Program ini melibatkan 50 kelompok tani dari 5 kabupaten/kota dengan total peserta 150 orang. Materi yang disampaikan meliputi pengembangan usaha, akses permodalan, dan pemasaran hasil hutan.</p>', '1742161261_67d7456d92665.jpg', '2025-02-08', 1, 1, 0, NULL, '2025-03-15 21:31:58', '2025-03-17 04:41:01');
-INSERT INTO `posts` VALUES (3, 'Intensifikasi Patroli Pengamanan Hutan', 'intensifikasi-patroli-pengamanan-hutan', 'Perlindungan', '<p>Peningkatan kegiatan patroli pengamanan hutan bersama masyarakat untuk mencegah kegiatan illegal logging dan perambahan kawasan hutan.</p><p>Patroli gabungan dilakukan secara rutin 2 kali seminggu dengan melibatkan petugas kehutanan, polisi hutan, dan masyarakat pengawas hutan (MPA).</p>', 'patroli.jpg', '2025-02-05', 0, 1, 0, NULL, '2025-03-15 21:31:58', '2025-03-15 21:31:58');
-INSERT INTO `posts` VALUES (4, 'Pengembangan Bibit Unggul Tanaman Hutan', 'pengembangan-bibit-unggul', 'Rehabilitasi', '<p>Inovasi pengembangan bibit unggul melalui teknik pembibitan modern untuk mendukung program rehabilitasi hutan dan lahan.</p><p>Program ini menghasilkan bibit unggul dengan tingkat pertumbuhan 30% lebih cepat dan daya tahan terhadap hama penyakit yang lebih baik.</p>', '1742161275_67d7457b73ab9.jpg', '2025-02-01', 0, 1, 0, NULL, '2025-03-15 21:31:58', '2025-03-17 04:41:15');
+INSERT INTO `posts` VALUES (1, 'Penanaman 10.000 Bibit Pohon di Kawasan Hutan Lindung', 'penanaman-10000-bibit-pohon', 'Pemberdayaan', '<p>Program penanaman pohon sebagai upaya rehabilitasi hutan dan lahan kritis telah dilaksanakan dengan melibatkan masyarakat sekitar hutan dan stakeholder terkait.</p><p>Kegiatan ini bertujuan untuk meningkatkan tutupan lahan dan memperbaiki fungsi hutan sebagai penyangga sumber daya air. Sebanyak 10.000 bibit pohon jenis endemik dan bernilai ekonomi tinggi telah ditanam pada areal seluas 50 hektar.</p>', '1742161244_67d7455ce6d29.jpeg', '2025-02-12', 1, 1, 0, 2, '2025-03-15 21:31:58', '2025-03-18 14:34:58');
+INSERT INTO `posts` VALUES (2, 'Penguatan Kelembagaan Kelompok Tani Hutan', 'penguatan-kelembagaan-kelompok-tani', 'Pemberdayaan', '<p>Kegiatan penguatan kelembagaan kelompok tani hutan melalui pelatihan manajemen organisasi dan pengembangan usaha produktif berbasis hasil hutan.</p><p>Program ini melibatkan 50 kelompok tani dari 5 kabupaten/kota dengan total peserta 150 orang. Materi yang disampaikan meliputi pengembangan usaha, akses permodalan, dan pemasaran hasil hutan.</p>', '1742161261_67d7456d92665.jpg', '2025-02-08', 1, 1, 0, 3, '2025-03-15 21:31:58', '2025-03-18 14:35:04');
+INSERT INTO `posts` VALUES (3, 'Intensifikasi Patroli Pengamanan Hutan', 'intensifikasi-patroli-pengamanan-hutan', 'Perlindungan', '<p>Peningkatan kegiatan patroli pengamanan hutan bersama masyarakat untuk mencegah kegiatan illegal logging dan perambahan kawasan hutan.</p><p>Patroli gabungan dilakukan secara rutin 2 kali seminggu dengan melibatkan petugas kehutanan, polisi hutan, dan masyarakat pengawas hutan (MPA).</p>', 'patroli.jpg', '2025-02-05', 1, 1, 0, 2, '2025-03-15 21:31:58', '2025-03-18 14:35:47');
+INSERT INTO `posts` VALUES (4, 'Pengembangan Bibit Unggul Tanaman Hutan', 'pengembangan-bibit-unggul', 'Rehabilitasi', '<p>Inovasi pengembangan bibit unggul melalui teknik pembibitan modern untuk mendukung program rehabilitasi hutan dan lahan.</p><p>Program ini menghasilkan bibit unggul dengan tingkat pertumbuhan 30% lebih cepat dan daya tahan terhadap hama penyakit yang lebih baik.</p>', '1742161275_67d7457b73ab9.jpg', '2025-02-01', 0, 1, 0, 3, '2025-03-15 21:31:58', '2025-03-18 14:35:14');
 
 -- ----------------------------
 -- Table structure for programs
@@ -239,7 +267,7 @@ CREATE TABLE `programs`  (
 -- ----------------------------
 -- Records of programs
 -- ----------------------------
-INSERT INTO `programs` VALUES (1, 'Perencanaan dan Tata Hutan', 'fas fa-water', 'Perencanaan, pengukuhan dan penatagunaan kawasan hutan', '<ul class=\"program-list\">\r\n                <li>\r\n                  <i class=\"ri-check-line\"></i>\r\n                  <span>Inventarisasi dan pemetaan kawasan hutan</span>\r\n                </li>\r\n                <li>\r\n                  <i class=\"ri-check-line\"></i>\r\n                  <span>Pengukuhan dan penatagunaan kawasan hutan</span>\r\n                </li>\r\n                <li>\r\n                  <i class=\"ri-check-line\"></i>\r\n                  <span>Penyusunan rencana pengelolaan hutan</span>\r\n                </li>\r\n              </ul>', 1, 1, '2025-03-15 21:31:58', '2025-03-17 04:32:47');
+INSERT INTO `programs` VALUES (1, 'Perencanaan dan Tata Hutan', 'fas fa-water', 'Perencanaan, pengukuhan dan penatagunaan kawasan hutan', '<ul class=\"program-list\">\r\n                <li>\r\n                  <i class=\"ri-check-line\"></i>\r\n                  <span>Inventarisasi dan pemetaan kawasan hutan</span>\r\n                </li>\r\n                <li>\r\n                  <i class=\"ri-check-line\"></i>\r\n                  <span>Pengukuhan dan penatagunaan kawasan hutan</span>\r\n                </li>\r\n                <li>\r\n                  <i class=\"ri-check-line\"></i>\r\n                  <span>Penyusunan rencana pengelolaan hutan</span>\r\n                </li>\r\n              </ul>', 1, 1, '2025-03-15 21:31:58', '2025-03-18 05:06:52');
 INSERT INTO `programs` VALUES (2, 'Pemanfaatan Hutan', 'ri-plant-line', 'Pemanfaatan dan penggunaan kawasan hutan', '<ul class=\"program-list\">\r\n                <li>\r\n                  <i class=\"ri-check-line\"></i>\r\n                  <span>Pemanfaatan kawasan, jasa lingkungan dan hasil hutan</span>\r\n                </li>\r\n                <li>\r\n                  <i class=\"ri-check-line\"></i>\r\n                  <span>Penggunaan dan perubahan peruntukan kawasan hutan</span>\r\n                </li>\r\n                <li>\r\n                  <i class=\"ri-check-line\"></i>\r\n                  <span>Pengelolaan iuran dan peredaran hasil hutan</span>\r\n                </li>\r\n              </ul>', 2, 1, '2025-03-15 21:31:58', '2025-03-15 21:31:58');
 INSERT INTO `programs` VALUES (3, 'Rehabilitasi Hutan', 'ri-seedling-line', 'Rehabilitasi hutan dan lahan kritis', '<ul class=\"program-list\">\r\n                <li>\r\n                  <i class=\"ri-check-line\"></i>\r\n                  <span>Rehabilitasi hutan dan lahan kritis</span>\r\n                </li>\r\n                <li>\r\n                  <i class=\"ri-check-line\"></i>\r\n                  <span>Perbenihan tanaman hutan</span>\r\n                </li>\r\n                <li>\r\n                  <i class=\"ri-check-line\"></i>\r\n                  <span>Pengelolaan DAS dan perhutanan sosial</span>\r\n                </li>\r\n              </ul>', 3, 1, '2025-03-15 21:31:58', '2025-03-15 21:31:58');
 INSERT INTO `programs` VALUES (4, 'Perlindungan Hutan', 'ri-shield-check-line', 'Perlindungan dan pengamanan hutan', '<ul class=\"program-list\">\r\n                <li>\r\n                  <i class=\"ri-check-line\"></i>\r\n                  <span>Pengamanan dan penegakan hukum kehutanan</span>\r\n                </li>\r\n                <li>\r\n                  <i class=\"ri-check-line\"></i>\r\n                  <span>Pengendalian kebakaran hutan dan lahan</span>\r\n                </li>\r\n                <li>\r\n                  <i class=\"ri-check-line\"></i>\r\n                  <span>Pengendalian kerusakan ekosistem hutan</span>\r\n                </li>\r\n              </ul>', 4, 1, '2025-03-15 21:31:58', '2025-03-15 21:31:58');
@@ -259,15 +287,16 @@ CREATE TABLE `services`  (
   `created_at` timestamp(0) NULL DEFAULT CURRENT_TIMESTAMP(0),
   `updated_at` timestamp(0) NULL DEFAULT CURRENT_TIMESTAMP(0) ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 6 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 7 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of services
 -- ----------------------------
-INSERT INTO `services` VALUES (1, 'Perizinan & Sertifikasi', 'fas fa-file-signature', 'Pendampingan perizinan industri primer hasil hutan', '<ul class=\"service-list\">\r\n                  <li>\r\n                    <i class=\"fas fa-check-circle\"></i> Pendampingan perizinan\r\n                    industri primer hasil hutan\r\n                  </li>\r\n                  <li>\r\n                    <i class=\"fas fa-check-circle\"></i> Sertifikasi hutan hak\r\n                    dan industri primer kayu\r\n                  </li>\r\n                  <li>\r\n                    <i class=\"fas fa-check-circle\"></i> Verifikasi dokumen hasil\r\n                    hutan\r\n                  </li>\r\n                  <li>\r\n                    <i class=\"fas fa-check-circle\"></i> Monitoring dan evaluasi\r\n                    perizinan\r\n                  </li>\r\n                </ul>', 1, 1, '2025-03-15 21:31:58', '2025-03-15 21:31:58');
+INSERT INTO `services` VALUES (1, 'Perizinan dan Sertifikasi', 'fas fa-file-signature', 'Pendampingan perizinan industri primer hasil hutan', '<ul class=\"service-list\">\r\n                  <li>\r\n                    <i class=\"fas fa-check-circle\"></i> Pendampingan perizinan\r\n                    industri primer hasil hutan\r\n                  </li>\r\n                  <li>\r\n                    <i class=\"fas fa-check-circle\"></i> Sertifikasi hutan hak\r\n                    dan industri primer kayu\r\n                  </li>\r\n                  <li>\r\n                    <i class=\"fas fa-check-circle\"></i> Verifikasi dokumen hasil\r\n                    hutan\r\n                  </li>\r\n                  <li>\r\n                    <i class=\"fas fa-check-circle\"></i> Monitoring dan evaluasi\r\n                    perizinan\r\n                  </li>\r\n                </ul>', 1, 1, '2025-03-15 21:31:58', '2025-03-18 09:03:58');
 INSERT INTO `services` VALUES (2, 'Rehabilitasi & Konservasi', 'fas fa-seedling', 'Rehabilitasi lahan kritis dan konservasi tanah dan air', '<ul class=\"service-list\">\r\n                  <li>\r\n                    <i class=\"fas fa-check-circle\"></i> Rehabilitasi lahan\r\n                    kritis\r\n                  </li>\r\n                  <li>\r\n                    <i class=\"fas fa-check-circle\"></i> Konservasi tanah dan air\r\n                  </li>\r\n                  <li>\r\n                    <i class=\"fas fa-check-circle\"></i> Pengelolaan DAS terpadu\r\n                  </li>\r\n                  <li>\r\n                    <i class=\"fas fa-check-circle\"></i> Pembinaan kawasan\r\n                    ekosistem esensial\r\n                  </li>\r\n                </ul>', 2, 1, '2025-03-15 21:31:58', '2025-03-15 21:31:58');
 INSERT INTO `services` VALUES (3, 'Pemberdayaan Masyarakat', 'fas fa-users', 'Program perhutanan sosial dan pendampingan kelompok tani hutan', '<ul class=\"service-list\">\r\n                  <li>\r\n                    <i class=\"fas fa-check-circle\"></i> Program perhutanan\r\n                    sosial\r\n                  </li>\r\n                  <li>\r\n                    <i class=\"fas fa-check-circle\"></i> Pendampingan kelompok\r\n                    tani hutan\r\n                  </li>\r\n                  <li>\r\n                    <i class=\"fas fa-check-circle\"></i> Penyuluhan kehutanan\r\n                  </li>\r\n                  <li>\r\n                    <i class=\"fas fa-check-circle\"></i> Pembinaan usaha\r\n                    kehutanan masyarakat\r\n                  </li>\r\n                </ul>', 3, 1, '2025-03-15 21:31:58', '2025-03-15 21:31:58');
 INSERT INTO `services` VALUES (4, 'Pengawasan & Pengendalian', 'fas fa-shield-alt', 'Pengendalian pemanfaatan tumbuhan/satwa liar non-CITES', '<ul class=\"service-list\">\r\n                  <li>\r\n                    <i class=\"fas fa-check-circle\"></i> Pengendalian pemanfaatan\r\n                    tumbuhan/satwa liar non-CITES\r\n                  </li>\r\n                  <li>\r\n                    <i class=\"fas fa-check-circle\"></i> Monitoring potensi hutan\r\n                  </li>\r\n                  <li>\r\n                    <i class=\"fas fa-check-circle\"></i> Evaluasi kinerja\r\n                    industri kehutanan\r\n                  </li>\r\n                  <li>\r\n                    <i class=\"fas fa-check-circle\"></i> Perlindungan hutan\r\n                  </li>\r\n                </ul>', 4, 1, '2025-03-15 21:31:58', '2025-03-15 21:31:58');
+INSERT INTO `services` VALUES (6, 'Pendaftaran PBPHH', 'fas fa-university', 'pendaftaran melalu jatim bejo', 'pendaftaran oss', 5, 1, '2025-03-18 09:04:48', '2025-03-18 09:04:48');
 
 -- ----------------------------
 -- Table structure for settings
@@ -299,6 +328,26 @@ INSERT INTO `settings` VALUES (9, 'social_instagram', 'https://www.instagram.com
 INSERT INTO `settings` VALUES (10, 'social_youtube', 'https://www.youtube.com/@officialcdkbojonegoro', 'Link YouTube', '2025-03-15 21:31:58', '2025-03-17 20:35:25');
 
 -- ----------------------------
+-- Table structure for site_settings
+-- ----------------------------
+DROP TABLE IF EXISTS `site_settings`;
+CREATE TABLE `site_settings`  (
+  `id` int(0) NOT NULL AUTO_INCREMENT,
+  `setting_key` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT 'Kunci pengaturan',
+  `setting_value` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT 'Nilai pengaturan (JSON)',
+  `created_at` timestamp(0) NULL DEFAULT CURRENT_TIMESTAMP(0),
+  `updated_at` timestamp(0) NULL DEFAULT CURRENT_TIMESTAMP(0) ON UPDATE CURRENT_TIMESTAMP(0),
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE INDEX `setting_key`(`setting_key`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 3 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of site_settings
+-- ----------------------------
+INSERT INTO `site_settings` VALUES (1, 'hero_content', '{\"title\":\"Cabang Dinas Kehutanan Wilayah Bojonegoro\",\"subtitle\":\"Unit Pelaksana Teknis Dinas Kehutanan Provinsi Jawa Timur yang melaksanakan kebijakan teknis operasional di bidang kehutanan\",\"button1_text\":\"Layanan Kami\",\"button1_link\":\"#layanan\",\"button2_text\":\"Hubungi Kami\",\"button2_link\":\"#kontak\",\"background_video\":\"forest-bg.mp4\"}', '2025-03-18 09:33:34', '2025-03-18 09:33:34');
+INSERT INTO `site_settings` VALUES (2, 'work_areas', '[{\"name\":\"Kabupaten Bojonegoro\",\"description\":\"Wilayah kerja meliputi kawasan hutan di Kabupaten Bojonegoro\"},{\"name\":\"Kabupaten Tuban\",\"description\":\"Wilayah kerja meliputi kawasan hutan di Kabupaten Tuban\"},{\"name\":\"Kabupaten Lamongan\",\"description\":\"Wilayah kerja meliputi kawasan hutan di Kabupaten Lamongan\"},{\"name\":\"Kabupaten Ngawi\",\"description\":\"Wilayah kerja meliputi kawasan hutan di Kabupaten Ngawi\"},{\"name\":\"Kabupaten Blora\",\"description\":\"Wilayah kerja meliputi kawasan hutan di Kabupaten Blora\"},{\"name\":\"Kabupaten Madiun\",\"description\":\"Wilayah kerja meliputi kawasan hutan di Kabupaten Madiun\"}]', '2025-03-18 09:33:34', '2025-03-18 09:33:34');
+
+-- ----------------------------
 -- Table structure for statistics
 -- ----------------------------
 DROP TABLE IF EXISTS `statistics`;
@@ -312,13 +361,15 @@ CREATE TABLE `statistics`  (
   `created_at` timestamp(0) NULL DEFAULT CURRENT_TIMESTAMP(0),
   `updated_at` timestamp(0) NULL DEFAULT CURRENT_TIMESTAMP(0) ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 3 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 7 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of statistics
 -- ----------------------------
-INSERT INTO `statistics` VALUES (3, 'Hasil Hutan Bukan Kayu', 'forest-production', 2025, 'kg', '{\"data\": [1000, 500, 6000], \"labels\": [\"Madu\", \"Getah Pinus\", \"Minyak Cengkeh\"]}', '2025-03-18 04:39:35', '2025-03-18 04:40:21');
-INSERT INTO `statistics` VALUES (4, 'Hasil Hutan Kayu', 'forest-production', 2025, 'm3', '{\"data\": [1000, 1500, 2000], \"labels\": [\"Jati\", \"Sengon\", \"Pinus\"]}', '2025-03-18 04:42:33', '2025-03-18 04:47:25');
+INSERT INTO `statistics` VALUES (3, 'Hasil Hutan Bukan Kayu', 'forest-production', 2025, 'ton', '{\"data\": [1000, 500, 6050], \"labels\": [\"Madu\", \"Getah Pinus\", \"Minyak Cengkeh\"]}', '2025-03-18 04:39:35', '2025-03-18 09:07:43');
+INSERT INTO `statistics` VALUES (4, 'Hasil Hutan Kayu', 'forest-production', 2025, 'm3', '{\"data\": [1000, 1500, 2000], \"labels\": [\"Jati\", \"Sengon\", \"Pinus\"]}', '2025-03-18 04:42:33', '2025-03-18 05:22:43');
+INSERT INTO `statistics` VALUES (5, 'Luas Kawasan Hutan Negara', 'forest-area', 2025, 'hektar', '{\"data\": [75000, 45000, 30000, 25000], \"labels\": [\"Hutan Produksi\", \"Hutan Lindung\", \"Hutan Konservasi\", \"Hutan Rakyat\"]}', '2025-03-18 10:13:30', '2025-03-18 14:31:38');
+INSERT INTO `statistics` VALUES (6, 'Luas Kawasan Hutan Rakyat', 'forest-area', 2025, 'hektar', '{\"data\": [75000, 45000, 30000, 25000], \"labels\": [\"Hutan Produksi\", \"Hutan Lindung\", \"Hutan Konservasi\", \"Hutan Rakyat\"]}', '2025-03-18 10:16:20', '2025-03-18 14:31:53');
 
 -- ----------------------------
 -- Table structure for users
@@ -336,12 +387,12 @@ CREATE TABLE `users`  (
   `updated_at` timestamp(0) NULL DEFAULT CURRENT_TIMESTAMP(0) ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `username`(`username`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 3 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of users
 -- ----------------------------
-INSERT INTO `users` VALUES (2, 'admin', '$2y$10$jVfT4QKO/WSCLDgSbSYCYu8mSyS.foFpYBFyHclmXJ4ewIEz6tEYS', 'Administrator utama', 'admin@cdk-bojonegoro.jatimprov.go.id', 'admin', '2025-03-18 04:21:00', '2025-03-16 05:02:58', '2025-03-18 04:21:00');
+INSERT INTO `users` VALUES (2, 'admin', '$2y$10$jVfT4QKO/WSCLDgSbSYCYu8mSyS.foFpYBFyHclmXJ4ewIEz6tEYS', 'Administrator utama', 'admin@cdk-bojonegoro.jatimprov.go.id', 'admin', '2025-03-18 14:30:59', '2025-03-16 05:02:58', '2025-03-18 14:30:59');
 INSERT INTO `users` VALUES (3, 'joni', '$2y$10$fmcDUtrbQ7rs/34Iha9J6OZ2WuOgkpHs3UkyHecP4tR1PzZiruDnS', 'joni', 'joni@gmail.com', 'editor', NULL, '2025-03-17 19:51:25', '2025-03-17 19:51:25');
 
 -- ----------------------------
