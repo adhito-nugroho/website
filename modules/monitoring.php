@@ -120,9 +120,9 @@ try {
             <label class="input-group-text" for="monitoringYear">Tahun</label>
             <select class="form-select" id="monitoringYear">
               <?php foreach ($available_years as $year): ?>
-                  <option value="<?php echo $year; ?>" <?php echo ($year == $current_year) ? 'selected' : ''; ?>>
-                    <?php echo $year; ?>
-                  </option>
+                <option value="<?php echo $year; ?>" <?php echo ($year == $current_year) ? 'selected' : ''; ?>>
+                  <?php echo $year; ?>
+                </option>
               <?php endforeach; ?>
             </select>
             <button class="btn btn-primary" type="button" id="loadMonitoring">Tampilkan</button>
@@ -183,8 +183,18 @@ try {
     <div class="row mb-4">
       <div class="col-md-8 mb-4" data-aos="fade-up">
         <div class="monitoring-card">
-          <div class="card-header">
+          <div class="card-header d-flex justify-content-between align-items-center">
             <h4>Jumlah Monitoring Per Bulan (<?php echo $current_year; ?>)</h4>
+            <div class="chart-controls">
+              <div class="btn-group" role="group" aria-label="Tipe Chart">
+                <button type="button" class="btn btn-sm btn-outline-primary active" id="barChartBtn">
+                  <i class="ri-bar-chart-fill"></i> Bar
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-primary" id="pieChartBtn">
+                  <i class="ri-pie-chart-fill"></i> Pie
+                </button>
+              </div>
+            </div>
           </div>
           <div class="card-body">
             <canvas id="monthlyMonitoringChart" height="300"></canvas>
@@ -193,8 +203,18 @@ try {
       </div>
       <div class="col-md-4 mb-4" data-aos="fade-up" data-aos-delay="200">
         <div class="monitoring-card">
-          <div class="card-header">
+          <div class="card-header d-flex justify-content-between align-items-center">
             <h4>Status Monitoring</h4>
+            <div class="chart-controls">
+              <div class="btn-group" role="group" aria-label="Tipe Chart">
+                <button type="button" class="btn btn-sm btn-outline-primary" id="barStatusChartBtn">
+                  <i class="ri-bar-chart-fill"></i> Bar
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-primary active" id="pieStatusChartBtn">
+                  <i class="ri-pie-chart-fill"></i> Pie
+                </button>
+              </div>
+            </div>
           </div>
           <div class="card-body">
             <canvas id="statusMonitoringChart" height="300"></canvas>
@@ -224,44 +244,45 @@ try {
                 </thead>
                 <tbody>
                   <?php if (count($monitorings) > 0): ?>
-                      <?php foreach ($monitorings as $index => $monitoring): ?>
-                          <tr>
-                            <td><?php echo $index + 1; ?></td>
-                            <td><?php echo date('d/m/Y', strtotime($monitoring['date'])); ?></td>
-                            <td><?php echo htmlspecialchars($monitoring['location']); ?></td>
-                            <td><?php echo htmlspecialchars($monitoring['activity']); ?></td>
-                            <td>
-                              <?php
-                              $status_class = '';
-                              switch ($monitoring['status']) {
-                                case 'pending':
-                                  $status_class = 'bg-warning text-dark';
-                                  $status_text = 'Menunggu';
-                                  break;
-                                case 'in_progress':
-                                  $status_class = 'bg-info text-white';
-                                  $status_text = 'Sedang Berjalan';
-                                  break;
-                                case 'completed':
-                                  $status_class = 'bg-success text-white';
-                                  $status_text = 'Selesai';
-                                  break;
-                                case 'cancelled':
-                                  $status_class = 'bg-danger text-white';
-                                  $status_text = 'Dibatalkan';
-                                  break;
-                                default:
-                                  $status_text = ucfirst($monitoring['status']);
-                              }
-                              ?>
-                              <span class="badge <?php echo $status_class; ?>"><?php echo $status_text; ?></span>
-                            </td>
-                          </tr>
-                      <?php endforeach; ?>
-                  <?php else: ?>
+                    <?php foreach ($monitorings as $index => $monitoring): ?>
                       <tr>
-                        <td colspan="5" class="text-center">Belum ada data monitoring untuk tahun <?php echo $current_year; ?>.</td>
+                        <td><?php echo $index + 1; ?></td>
+                        <td><?php echo date('d/m/Y', strtotime($monitoring['date'])); ?></td>
+                        <td><?php echo htmlspecialchars($monitoring['location']); ?></td>
+                        <td><?php echo htmlspecialchars($monitoring['activity']); ?></td>
+                        <td>
+                          <?php
+                          $status_class = '';
+                          switch ($monitoring['status']) {
+                            case 'pending':
+                              $status_class = 'bg-warning text-dark';
+                              $status_text = 'Menunggu';
+                              break;
+                            case 'in_progress':
+                              $status_class = 'bg-info text-white';
+                              $status_text = 'Sedang Berjalan';
+                              break;
+                            case 'completed':
+                              $status_class = 'bg-success text-white';
+                              $status_text = 'Selesai';
+                              break;
+                            case 'cancelled':
+                              $status_class = 'bg-danger text-white';
+                              $status_text = 'Dibatalkan';
+                              break;
+                            default:
+                              $status_text = ucfirst($monitoring['status']);
+                          }
+                          ?>
+                          <span class="badge <?php echo $status_class; ?>"><?php echo $status_text; ?></span>
+                        </td>
                       </tr>
+                    <?php endforeach; ?>
+                  <?php else: ?>
+                    <tr>
+                      <td colspan="5" class="text-center">Belum ada data monitoring untuk tahun
+                        <?php echo $current_year; ?>.</td>
+                    </tr>
                   <?php endif; ?>
                 </tbody>
               </table>
@@ -277,13 +298,13 @@ try {
         <div class="monitoring-description">
           <h4>Tentang Monitoring & Evaluasi</h4>
           <p>
-            Monitoring dan evaluasi merupakan bagian penting dalam pengelolaan program kehutanan untuk memastikan 
-            pencapaian target dan tujuan yang telah ditetapkan. CDK Wilayah Bojonegoro secara berkala melakukan 
+            Monitoring dan evaluasi merupakan bagian penting dalam pengelolaan program kehutanan untuk memastikan
+            pencapaian target dan tujuan yang telah ditetapkan. CDK Wilayah Bojonegoro secara berkala melakukan
             monitoring dan evaluasi terhadap program-program yang dilaksanakan.
           </p>
           <p>
-            Kegiatan monitoring meliputi pemantauan langsung ke lapangan, pengumpulan data dan informasi, serta 
-            evaluasi pelaksanaan program. Hasil monitoring digunakan sebagai dasar untuk perbaikan program 
+            Kegiatan monitoring meliputi pemantauan langsung ke lapangan, pengumpulan data dan informasi, serta
+            evaluasi pelaksanaan program. Hasil monitoring digunakan sebagai dasar untuk perbaikan program
             dan pengambilan keputusan di masa mendatang.
           </p>
         </div>
@@ -303,195 +324,282 @@ try {
     align-items: center;
     transition: transform 0.3s ease;
   }
-  
+
   .stat-card:hover {
     transform: translateY(-5px);
   }
-  
+
   .stat-icon {
     font-size: 2.5rem;
     margin-right: 15px;
   }
-  
+
   .stat-content h3 {
     font-size: 1.8rem;
     margin-bottom: 0;
     font-weight: 700;
   }
-  
+
   .stat-content p {
     margin-bottom: 0;
     opacity: 0.9;
   }
-  
+
   .monitoring-card {
     border-radius: 8px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     margin-bottom: 20px;
     overflow: hidden;
   }
-  
+
   .monitoring-card .card-header {
     background-color: #f8f9fa;
     padding: 15px 20px;
     border-bottom: 1px solid #e9ecef;
   }
-  
+
   .monitoring-card .card-header h4 {
     margin-bottom: 0;
     font-weight: 600;
   }
-  
+
   .monitoring-card .card-body {
     padding: 20px;
   }
-  
+
   .monitoring-description {
     background-color: #f8f9fa;
     padding: 25px;
     border-radius: 8px;
     margin-top: 20px;
   }
-  
+
   .monitoring-description h4 {
     font-weight: 600;
     margin-bottom: 15px;
   }
-  
+
   .monitoring-description p {
     margin-bottom: 15px;
     line-height: 1.6;
   }
-  
+
   .table th {
     font-weight: 600;
+  }
+
+  .chart-controls .btn-group {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  .chart-controls .btn {
+    font-size: 0.875rem;
+  }
+
+  .chart-controls .btn i {
+    margin-right: 3px;
   }
 </style>
 
 <!-- Script untuk chart -->
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-  try {
-    // Memastikan Chart.js tersedia
-    if (typeof Chart === 'undefined') {
-      console.error('Chart.js is not loaded!');
-      loadChartJsScript();
-      return;
-    }
-    
-    // Buat chart bulanan
-    createMonthlyChart();
-    
-    // Buat chart status
-    createStatusChart();
-    
-    // Event listener untuk filter tahun
-    const loadMonitoringBtn = document.getElementById('loadMonitoring');
-    if (loadMonitoringBtn) {
-      loadMonitoringBtn.addEventListener('click', function() {
-        const year = document.getElementById('monitoringYear').value;
-        window.location.href = `?page=monitoring&year=${year}`;
+  document.addEventListener('DOMContentLoaded', function () {
+    try {
+      // Memastikan Chart.js tersedia
+      if (typeof Chart === 'undefined') {
+        console.error('Chart.js is not loaded!');
+        loadChartJsScript();
+        return;
+      }
+
+      // Variabel global untuk menyimpan chart
+      let monthlyChart = null;
+      let statusChart = null;
+
+      // Data untuk chart
+      const monthlyData = {
+        labels: <?php echo json_encode($monitoring_months); ?>,
+        datasets: [{
+          label: 'Jumlah Kegiatan',
+          data: <?php echo json_encode($monitoring_counts); ?>,
+          backgroundColor: 'rgba(54, 162, 235, 0.7)',
+          borderColor: 'rgba(54, 162, 235, 1)',
+          borderWidth: 1
+        }]
+      };
+
+      const statusData = {
+        labels: <?php echo json_encode($status_labels); ?>,
+        datasets: [{
+          data: <?php echo json_encode($status_counts); ?>,
+          backgroundColor: <?php echo json_encode($status_colors); ?>,
+          borderWidth: 0
+        }]
+      };
+
+      // Inisialisasi chart
+      createMonthlyChart('bar');
+      createStatusChart('doughnut');
+
+      // Event listener untuk tombol chart bulanan
+      document.getElementById('barChartBtn').addEventListener('click', function () {
+        this.classList.add('active');
+        document.getElementById('pieChartBtn').classList.remove('active');
+        updateMonthlyChart('bar');
       });
-    }
-  } catch (error) {
-    console.error('Error in monitoring charts script:', error);
-  }
-  
-  // Fungsi untuk memuat Chart.js jika belum tersedia
-  function loadChartJsScript() {
-    const script = document.createElement('script');
-    script.src = 'https://cdn.jsdelivr.net/npm/chart.js';
-    script.onload = function() {
-      createMonthlyChart();
-      createStatusChart();
-    };
-    document.head.appendChild(script);
-  }
-  
-  // Fungsi untuk membuat chart bulanan
-  function createMonthlyChart() {
-    const ctx = document.getElementById('monthlyMonitoringChart').getContext('2d');
-    
-    // Data untuk chart bulanan
-    const monthlyData = {
-      labels: <?php echo json_encode($monitoring_months); ?>,
-      datasets: [{
-        label: 'Jumlah Kegiatan',
-        data: <?php echo json_encode($monitoring_counts); ?>,
-        backgroundColor: 'rgba(54, 162, 235, 0.7)',
-        borderColor: 'rgba(54, 162, 235, 1)',
-        borderWidth: 1
-      }]
-    };
-    
-    // Buat chart
-    new Chart(ctx, {
-      type: 'bar',
-      data: monthlyData,
-      options: {
-        responsive: true,
-        plugins: {
-          legend: {
-            display: true,
-            position: 'top'
-          },
-          tooltip: {
-            mode: 'index',
-            intersect: false
-          }
-        },
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: {
-              stepSize: 1,
-              precision: 0
+
+      document.getElementById('pieChartBtn').addEventListener('click', function () {
+        this.classList.add('active');
+        document.getElementById('barChartBtn').classList.remove('active');
+        updateMonthlyChart('pie');
+      });
+
+      // Event listener untuk tombol chart status
+      document.getElementById('barStatusChartBtn').addEventListener('click', function () {
+        this.classList.add('active');
+        document.getElementById('pieStatusChartBtn').classList.remove('active');
+        updateStatusChart('bar');
+      });
+
+      document.getElementById('pieStatusChartBtn').addEventListener('click', function () {
+        this.classList.add('active');
+        document.getElementById('barStatusChartBtn').classList.remove('active');
+        updateStatusChart('doughnut');
+      });
+
+      // Event listener untuk filter tahun
+      const loadMonitoringBtn = document.getElementById('loadMonitoring');
+      if (loadMonitoringBtn) {
+        loadMonitoringBtn.addEventListener('click', function () {
+          const year = document.getElementById('monitoringYear').value;
+          window.location.href = `?page=monitoring&year=${year}`;
+        });
+      }
+
+      // Fungsi untuk memuat Chart.js jika belum tersedia
+      function loadChartJsScript() {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/chart.js';
+        script.onload = function () {
+          createMonthlyChart('bar');
+          createStatusChart('doughnut');
+        };
+        document.head.appendChild(script);
+      }
+
+      // Fungsi untuk membuat chart bulanan
+      function createMonthlyChart(type) {
+        const ctx = document.getElementById('monthlyMonitoringChart').getContext('2d');
+
+        // Hancurkan chart sebelumnya jika ada
+        if (monthlyChart) {
+          monthlyChart.destroy();
+        }
+
+        // Opsi chart berdasarkan tipe
+        const options = {
+          responsive: true,
+          plugins: {
+            legend: {
+              display: true,
+              position: 'top'
+            },
+            tooltip: {
+              mode: 'index',
+              intersect: false
             }
           }
+        };
+
+        // Tambahkan opsi khusus untuk tipe bar
+        if (type === 'bar') {
+          options.scales = {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                stepSize: 1,
+                precision: 0
+              }
+            }
+          };
         }
+
+        // Buat chart baru
+        monthlyChart = new Chart(ctx, {
+          type: type,
+          data: monthlyData,
+          options: options
+        });
       }
-    });
-  }
-  
-  // Fungsi untuk membuat chart status
-  function createStatusChart() {
-    const ctx = document.getElementById('statusMonitoringChart').getContext('2d');
-    
-    // Data untuk chart status
-    const statusData = {
-      labels: <?php echo json_encode($status_labels); ?>,
-      datasets: [{
-        data: <?php echo json_encode($status_counts); ?>,
-        backgroundColor: <?php echo json_encode($status_colors); ?>,
-        borderWidth: 0
-      }]
-    };
-    
-    // Buat chart
-    new Chart(ctx, {
-      type: 'doughnut',
-      data: statusData,
-      options: {
-        responsive: true,
-        plugins: {
-          legend: {
-            position: 'bottom'
-          },
-          tooltip: {
-            callbacks: {
-              label: function(context) {
-                const label = context.label || '';
-                const value = context.raw || 0;
-                const total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
-                const percentage = Math.round((value / total) * 100);
-                return `${label}: ${value} (${percentage}%)`;
+
+      // Fungsi untuk update chart bulanan
+      function updateMonthlyChart(type) {
+        createMonthlyChart(type);
+      }
+
+      // Fungsi untuk membuat chart status
+      function createStatusChart(type) {
+        const ctx = document.getElementById('statusMonitoringChart').getContext('2d');
+
+        // Hancurkan chart sebelumnya jika ada
+        if (statusChart) {
+          statusChart.destroy();
+        }
+
+        // Opsi chart berdasarkan tipe
+        const options = {
+          responsive: true,
+          plugins: {
+            legend: {
+              position: 'bottom'
+            },
+            tooltip: {
+              callbacks: {
+                label: function (context) {
+                  const label = context.label || '';
+                  const value = context.raw || 0;
+                  const total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                  const percentage = Math.round((value / total) * 100);
+                  return `${label}: ${value} (${percentage}%)`;
+                }
               }
             }
           }
-        },
-        cutout: '65%'
+        };
+
+        // Tambahkan opsi khusus untuk tipe doughnut/pie
+        if (type === 'doughnut') {
+          options.cutout = '65%';
+        }
+
+        // Tambahkan opsi khusus untuk tipe bar
+        if (type === 'bar') {
+          options.scales = {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                stepSize: 1,
+                precision: 0
+              }
+            }
+          };
+        }
+
+        // Buat chart baru
+        statusChart = new Chart(ctx, {
+          type: type,
+          data: statusData,
+          options: options
+        });
       }
-    });
-  }
-});
+
+      // Fungsi untuk update chart status
+      function updateStatusChart(type) {
+        createStatusChart(type);
+      }
+
+    } catch (error) {
+      console.error('Error in monitoring charts script:', error);
+    }
+  });
 </script>

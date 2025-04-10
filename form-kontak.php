@@ -5,19 +5,6 @@ define('BASE_PATH', dirname(__FILE__));
 // Mulai session
 session_start();
 
-// Tampilkan semua error (development only)
-// ini_set('display_errors', 1);
-// ini_set('display_startup_errors', 1);
-// error_reporting(E_ALL);
-
-// Konfigurasi database
-// $db_config = [
-//     'host' => 'localhost',
-//     'username' => 'root',
-//     'password' => '',
-//     'database' => 'cdk_bojonegoro',
-//     'charset' => 'utf8mb4'
-// ];
 
 require_once BASE_PATH . '/includes/config.php';
 
