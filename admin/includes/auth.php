@@ -12,7 +12,7 @@ if (!defined('ADMIN_PATH')) {
 function requireLogin()
 {
     if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
-        header('Location: index.php');
+        header('Location: ' . dirname($_SERVER['SCRIPT_NAME'], 3) . '/login.php');
         exit;
     }
 }
@@ -46,7 +46,7 @@ function requireRole($roles)
 {
     if (!checkRole($roles)) {
         $_SESSION['error_message'] = 'Anda tidak memiliki izin untuk mengakses halaman ini.';
-        header('Location: dashboard.php');
+        header('Location: ' . dirname($_SERVER['SCRIPT_NAME'], 3) . '/modules/dashboard/index.php');
         exit;
     }
 }

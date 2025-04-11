@@ -5,16 +5,71 @@ if (!defined('BASE_PATH')) {
     exit('Akses langsung ke file ini tidak diperbolehkan');
 }
 
-// Ambil data publikasi/berita dan dokumen dari database
-$posts = getPosts(4);
-$documents = getDocuments(4);
-
-// Pastikan $posts dan $documents adalah array
-if (!is_array($posts)) {
-    $posts = [];
+// Memastikan variabel $pdo tersedia
+if (!isset($pdo) || !($pdo instanceof PDO)) {
+    echo '<div class="alert alert-danger">Koneksi database tidak tersedia</div>';
+    return;
 }
 
-if (!is_array($documents)) {
+// Memastikan fungsi-fungsi yang diperlukan sudah tersedia
+if (!function_exists('formatDateIndo') || !function_exists('sanitizeInput') || !function_exists('truncateText')) {
+    require_once BASE_PATH . '/includes/functions.php';
+}
+
+// Include publikasi_views.php untuk halaman khusus publikasi
+require_once BASE_PATH . '/includes/publikasi_views.php';
+
+// Periksa apakah ada parameter view atau id
+if (isset($_GET['view']) || isset($_GET['id'])) {
+    try {
+        // Jika ada parameter id, tampilkan detail publikasi
+        if (isset($_GET['id'])) {
+            renderPublicationDetail((int)$_GET['id']);
+            return; // Hentikan eksekusi file ini
+        }
+        
+        // Jika ada parameter view, tampilkan halaman sesuai parameter
+        if (isset($_GET['view'])) {
+            switch ($_GET['view']) {
+                case 'all':
+                    renderAllPublications();
+                    return; // Hentikan eksekusi file ini
+                    
+                case 'documents':
+                    renderAllDocuments();
+                    return; // Hentikan eksekusi file ini
+                    
+                default:
+                    // Jika parameter view tidak valid, lanjutkan dengan tampilan default
+                    break;
+            }
+        }
+    } catch (Exception $e) {
+        error_log('Error rendering publication view: ' . $e->getMessage());
+        echo '<div class="container py-5"><div class="alert alert-danger">Terjadi kesalahan saat memuat halaman publikasi. Silakan coba lagi nanti.</div></div>';
+        return;
+    }
+}
+
+// Jika tidak ada parameter view atau id, atau parameter tidak valid,
+// tampilkan section publikasi pada halaman beranda (default)
+
+// Ambil data publikasi/berita dan dokumen dari database
+try {
+    $posts = getPosts(4);
+    $documents = getDocuments(4);
+    
+    // Pastikan $posts dan $documents adalah array
+    if (!is_array($posts)) {
+        $posts = [];
+    }
+    
+    if (!is_array($documents)) {
+        $documents = [];
+    }
+} catch (Exception $e) {
+    error_log('Error getting posts/documents: ' . $e->getMessage());
+    $posts = [];
     $documents = [];
 }
 ?>

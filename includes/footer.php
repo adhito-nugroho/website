@@ -112,56 +112,58 @@ if (!isset($settings) || !is_array($settings)) {
     
     <!-- Particles and Animation Scripts -->
     <script>
-    // Particles Config
-    particlesJS("particles-js", {
-      particles: {
-        number: {
-          value: 40,
-          density: {
-            enable: true,
-            value_area: 800
-          }
-        },
-        color: {
-          value: "#ffffff"
-        },
-        opacity: {
-          value: 0.3,
-          random: false
-        },
-        size: {
-          value: 2,
-          random: true
-        },
-        line_linked: {
-          enable: true,
-          distance: 150,
-          color: "#ffffff",
-          opacity: 0.2,
-          width: 1
-        },
-        move: {
-          enable: true,
-          speed: 3,
-          direction: "none",
-          random: false,
-          straight: false,
-          out_mode: "out",
-          bounce: false
-        }
-      },
-      interactivity: {
-        detect_on: "canvas",
-        events: {
-          onhover: {
-            enable: true,
-            mode: "repulse"
+    // Particles Config - hanya dijalankan pada halaman penuh
+    if (typeof isFullPage !== 'undefined' && isFullPage && document.getElementById('particles-js')) {
+        particlesJS("particles-js", {
+          particles: {
+            number: {
+              value: 40,
+              density: {
+                enable: true,
+                value_area: 800
+              }
+            },
+            color: {
+              value: "#ffffff"
+            },
+            opacity: {
+              value: 0.3,
+              random: false
+            },
+            size: {
+              value: 2,
+              random: true
+            },
+            line_linked: {
+              enable: true,
+              distance: 150,
+              color: "#ffffff",
+              opacity: 0.2,
+              width: 1
+            },
+            move: {
+              enable: true,
+              speed: 3,
+              direction: "none",
+              random: false,
+              straight: false,
+              out_mode: "out",
+              bounce: false
+            }
           },
-          resize: true
-        }
-      },
-      retina_detect: true
-    });
+          interactivity: {
+            detect_on: "canvas",
+            events: {
+              onhover: {
+                enable: true,
+                mode: "repulse"
+              },
+              resize: true
+            }
+          },
+          retina_detect: true
+        });
+    }
 
     // Pastikan ScrollReveal sudah dimuat
     document.addEventListener('DOMContentLoaded', function() {

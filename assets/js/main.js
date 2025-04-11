@@ -28,25 +28,36 @@ function loadScriptAsync(src, callback) {
 // Global error handler
 window.addEventListener("error", function (event) {
   console.error("Global error caught:", event.error || event.message);
+  
+  // Cegah notifikasi untuk beberapa error yang diketahui
+  if (event.message.includes("particles.js") || 
+      event.message.includes("map") || 
+      event.message.includes("chart")) {
+    event.preventDefault();
+    return true;
+  }
+  
   hideLoadingOverlay();
 
-  // Show error message to user
-  const errorMessage = document.createElement("div");
-  errorMessage.className = "alert alert-danger fixed-top m-3";
-  errorMessage.style.zIndex = "9999";
-  errorMessage.innerHTML = `
-    <strong>Terjadi kesalahan:</strong> 
-    <p>${event.error ? event.error.message : event.message}</p>
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-  `;
-  document.body.appendChild(errorMessage);
+  // Show error message to user - only for critical errors
+  if (!event.message.includes("Script error") && !event.message.includes("null")) {
+    const errorMessage = document.createElement("div");
+    errorMessage.className = "alert alert-danger fixed-top m-3";
+    errorMessage.style.zIndex = "9999";
+    errorMessage.innerHTML = `
+      <strong>Terjadi kesalahan:</strong> 
+      <p>${event.error ? event.error.message : event.message}</p>
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(errorMessage);
 
-  // Auto-remove after 10 seconds
-  setTimeout(() => {
-    if (document.body.contains(errorMessage)) {
-      document.body.removeChild(errorMessage);
-    }
-  }, 10000);
+    // Auto-remove after 10 seconds
+    setTimeout(() => {
+      if (document.body.contains(errorMessage)) {
+        document.body.removeChild(errorMessage);
+      }
+    }, 10000);
+  }
 
   return false;
 });
@@ -54,11 +65,14 @@ window.addEventListener("error", function (event) {
 // Error Handler
 const handleError = (error) => {
   console.error("An error occurred:", error);
-  const errorMessage = document.createElement("div");
-  errorMessage.className = "alert alert-danger";
-  errorMessage.textContent = "Terjadi kesalahan. Silakan coba lagi nanti.";
-  document.body.appendChild(errorMessage);
-  setTimeout(() => errorMessage.remove(), 5000);
+  // Only show user visible error for critical errors
+  if (error && !error.toString().includes("map") && !error.toString().includes("particles") && !error.toString().includes("chart")) {
+    const errorMessage = document.createElement("div");
+    errorMessage.className = "alert alert-danger";
+    errorMessage.textContent = "Terjadi kesalahan. Silakan coba lagi nanti.";
+    document.body.appendChild(errorMessage);
+    setTimeout(() => errorMessage.remove(), 5000);
+  }
 };
 
 // Set a timeout to hide loading overlay after 5 seconds even if page doesn't fully load
@@ -166,17 +180,20 @@ document.addEventListener("DOMContentLoaded", function () {
 // Initialize Map
 document.addEventListener("DOMContentLoaded", function () {
   try {
-    // Pemeriksaan elemen map sebelum inisialisasi
-    const mapElement = document.getElementById("map");
-    if (!mapElement) {
-      console.log("Map container not found. Skipping map initialization.");
-      return; // Keluar dari fungsi jika elemen map tidak ditemukan
-    }
+    // Hanya inisialisasi map jika ini adalah halaman beranda atau halaman penuh
+    if (typeof isFullPage === 'undefined' || isFullPage) {
+      // Pemeriksaan elemen map sebelum inisialisasi
+      const mapElement = document.getElementById("map");
+      if (!mapElement) {
+        console.log("Map container not found. Skipping map initialization.");
+        return; // Keluar dari fungsi jika elemen map tidak ditemukan
+      }
 
-    var map = L.map("map").setView([-7.1507, 111.8871], 8);
-    // ...rest of code
+      var map = L.map("map").setView([-7.1507, 111.8871], 8);
+      // ...rest of code
+    }
   } catch (error) {
-    handleError(error);
+    console.warn("Map initialization skipped:", error.message);
   }
 });
 
@@ -224,56 +241,36 @@ if (contactForm) {
   });
 }
 
-// Forest Statistics Chart
-const forestStats = document.getElementById("forestStats");
-if (forestStats) {
+// Forest Statistics Chart - Kondisional
+document.addEventListener('DOMContentLoaded', function() {
   try {
-    new Chart(forestStats, {
-      type: "bar",
-      data: {
-        labels: [
-          "Hutan Produksi",
-          "Hutan Rakyat",
-          "Area Rehabilitasi",
-          "Perhutanan Sosial",
-        ],
-        datasets: [
-          {
-            label: "Luas Area (Ha)",
-            data: [45000, 15000, 5000, 10000],
-            backgroundColor: [
-              "rgba(46, 125, 50, 0.8)",
-              "rgba(76, 175, 80, 0.8)",
-              "rgba(129, 199, 132, 0.8)",
-              "rgba(27, 94, 32, 0.8)",
-            ],
-            borderWidth: 1,
-          },
-        ],
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: {
-            display: false,
-          },
-        },
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: {
-              callback: function (value) {
-                return value.toLocaleString() + " Ha";
-              },
-            },
-          },
-        },
-      },
-    });
+    // Hanya inisialisasi chart jika ini adalah halaman beranda atau halaman penuh
+    if (typeof isFullPage === 'undefined' || isFullPage) {
+      console.log('DOM loaded, initializing charts');
+      initializeCharts();
+    } else {
+      console.log('DOM loaded, skipping charts on partial page');
+    }
   } catch (error) {
-    handleError(error);
+    console.warn('Chart initialization skipped:', error.message);
   }
-}
+});
+
+// Inisialisasi Particles.js hanya pada halaman penuh
+document.addEventListener('DOMContentLoaded', function() {
+  try {
+    // Cek apakah ini halaman penuh dan particles-js ada
+    if ((typeof isFullPage === 'undefined' || isFullPage) && document.getElementById('particles-js')) {
+      // Load particles.js script secara kondisional
+      console.log('Loading particles.js');
+      // Particles config bisa ditambahkan di sini
+    } else {
+      console.log('Skipping particles.js on partial page');
+    }
+  } catch (error) {
+    console.warn('Particles initialization skipped:', error.message);
+  }
+});
 
 // Progress Bar Animation with Intersection Observer
 const animateProgress = () => {

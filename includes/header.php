@@ -70,6 +70,19 @@ if ($page != 'beranda') {
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="canonical" href="<?php echo (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]"; ?>">
     
+    <!-- Error handling for resource loading -->
+    <script>
+    // Handle resource loading errors
+    window.addEventListener('error', function(e) {
+        // Only handle resource loading errors
+        if (e.target && (e.target.tagName === 'LINK' || e.target.tagName === 'SCRIPT' || e.target.tagName === 'IMG')) {
+            console.warn('Resource loading error:', e.target.src || e.target.href);
+            e.preventDefault();
+            return true;
+        }
+    }, true);
+    </script>
+    
     <!-- Preload critical assets -->
     <link rel="preload" href="assets/css/styles.css" as="style">
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" as="style">
@@ -108,7 +121,23 @@ if ($page != 'beranda') {
 
     <link rel="stylesheet" href="assets/css/styles.css" />
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <?php 
+    // Muat CSS publikasi jika halaman publikasi atau terdapat parameter view/id
+    $load_publikasi_css = ($page === 'publikasi');
+    $load_publikasi_css = $load_publikasi_css || (isset($_GET['view']) && in_array($_GET['view'], ['all', 'documents']));
+    $load_publikasi_css = $load_publikasi_css || isset($_GET['id']);
+    
+    if ($load_publikasi_css): 
+    ?>
+    <link rel="stylesheet" href="assets/css/publikasi.css" />
+    <?php endif; ?>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Kondisional loading script -->
+    <script>
+    // Flag untuk menentukan apakah ini halaman penuh atau hanya bagian
+    var isFullPage = <?php echo ($page === 'beranda' || !$has_specific_view) ? 'true' : 'false'; ?>;
+    </script>
 
     <!-- Dashboard Styles -->
     <style>

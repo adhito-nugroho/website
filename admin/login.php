@@ -77,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
 
                 // Redirect ke dashboard
-                header('Location: dashboard.php');
+                header('Location: modules/dashboard/index.php');
                 exit;
             } else {
                 $error = 'Username atau password tidak valid';
