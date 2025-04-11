@@ -105,7 +105,6 @@ if (!isset($settings) || !is_array($settings)) {
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
-    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     <script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
     <script src="https://unpkg.com/scrollreveal@4.0.9/dist/scrollreveal.min.js"></script>
     <script src="assets/js/main.js"></script>
@@ -206,8 +205,6 @@ if (!isset($settings) || !is_array($settings)) {
             }
           }
         });
-      } else {
-        console.warn('ScrollReveal library not loaded');
       }
     });
     </script>
@@ -221,9 +218,6 @@ if (!isset($settings) || !is_array($settings)) {
             const perfData = window.performance.timing;
             const pageLoadTime = perfData.loadEventEnd - perfData.navigationStart;
             const domReadyTime = perfData.domComplete - perfData.domLoading;
-            
-            console.log('Page load time: ' + pageLoadTime + 'ms');
-            console.log('DOM ready time: ' + domReadyTime + 'ms');
             
             // Send to analytics if needed
             if (typeof gtag === 'function') {
@@ -250,25 +244,24 @@ if (!isset($settings) || !is_array($settings)) {
       // Track user engagement
       document.addEventListener('DOMContentLoaded', function() {
         // Track scroll depth
-        let scrollDepth = 0;
+        let maxScrollDepth = 0;
         window.addEventListener('scroll', debounce(function() {
-          const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-          const scrollHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-          const currentScrollDepth = Math.round((scrollTop / scrollHeight) * 100);
-          
-          if (currentScrollDepth > scrollDepth && currentScrollDepth % 25 === 0) {
-            scrollDepth = currentScrollDepth;
-            console.log('Scroll depth: ' + scrollDepth + '%');
-            
-            // Send to analytics if needed
-            if (typeof gtag === 'function') {
-              gtag('event', 'scroll_depth', {
-                'depth': scrollDepth,
-                'page': window.location.pathname
-              });
+          const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+          if (scrollHeight > 0) {
+            const scrollDepth = Math.floor((window.scrollY / scrollHeight) * 100);
+            if (scrollDepth > maxScrollDepth) {
+              maxScrollDepth = scrollDepth;
+              
+              // Send to analytics if needed
+              if (typeof gtag === 'function' && scrollDepth % 25 === 0) { // Report at 25%, 50%, 75%, 100%
+                gtag('event', 'scroll_depth', {
+                  'depth': scrollDepth,
+                  'page': window.location.pathname
+                });
+              }
             }
           }
-        }, 100));
+        }, 500));
       });
     </script>
   </body>

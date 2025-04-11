@@ -295,37 +295,35 @@ $current_action = isset($_GET['action']) ? $_GET['action'] : '';
                         </div>
                     <?php endif; ?>
                     <script>
-                        document.addEventListener('DOMContentLoaded', function () {
-                            try {
-                                // Inisialisasi dropdown di navbar
-                                document.querySelectorAll('.dropdown-toggle').forEach(function (element) {
-                                    new bootstrap.Dropdown(element);
-                                });
-                                console.log('Dropdown initialized successfully');
-                            } catch (error) {
-                                console.error('Error initializing dropdowns:', error);
-                            }
-                        });
-                    </script>
-                    <!-- Custom JavaScript untuk dropdown user -->
-                    <script>
-                        document.addEventListener('DOMContentLoaded', function () {
-                            const userDropdown = document.getElementById('userDropdown');
-                            const dropdownMenu = document.querySelector('[aria-labelledby="userDropdown"]');
-
-                            if (userDropdown && dropdownMenu) {
-                                userDropdown.addEventListener('click', function (e) {
+                        // Inisialisasi dropdown dengan JavaScript
+                        document.addEventListener('DOMContentLoaded', function() {
+                            const dropdownToggle = document.querySelectorAll('.dropdown-toggle');
+                            dropdownToggle.forEach(function(dropdown) {
+                                dropdown.addEventListener('click', function(e) {
                                     e.preventDefault();
-                                    e.stopPropagation();
-                                    dropdownMenu.classList.toggle('show');
-                                });
-
-                                // Close dropdown when clicking outside
-                                document.addEventListener('click', function (e) {
-                                    if (!userDropdown.contains(e.target) && !dropdownMenu.contains(e.target)) {
-                                        dropdownMenu.classList.remove('show');
+                                    const parent = this.parentElement;
+                                    parent.classList.toggle('show');
+                                    const dropdownMenu = parent.querySelector('.dropdown-menu');
+                                    if (dropdownMenu) {
+                                        dropdownMenu.classList.toggle('show');
                                     }
                                 });
-                            }
+                            });
+                            
+                            // Tutup dropdown ketika mengklik di luar
+                            document.addEventListener('click', function(e) {
+                                if (!e.target.matches('.dropdown-toggle')) {
+                                    const dropdowns = document.querySelectorAll('.dropdown');
+                                    dropdowns.forEach(function(dropdown) {
+                                        if (dropdown.classList.contains('show') && !dropdown.contains(e.target)) {
+                                            dropdown.classList.remove('show');
+                                            const dropdownMenu = dropdown.querySelector('.dropdown-menu');
+                                            if (dropdownMenu) {
+                                                dropdownMenu.classList.remove('show');
+                                            }
+                                        }
+                                    });
+                                }
+                            });
                         });
                     </script>

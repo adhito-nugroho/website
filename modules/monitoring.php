@@ -80,7 +80,7 @@ try {
     $monitoring_counts[$month_index] = (int) $data['count'];
   }
 
-  // Data untuk chart (status monitoring)
+  // Data untuk chart (status monitoring) - Gunakan warna yang lebih lembut
   $status_labels = ['Menunggu', 'Sedang Berjalan', 'Selesai', 'Dibatalkan'];
   $status_counts = [
     $monitoring_by_status['pending'],
@@ -88,7 +88,28 @@ try {
     $monitoring_by_status['completed'],
     $monitoring_by_status['cancelled']
   ];
-  $status_colors = ['#FFC107', '#17A2B8', '#28A745', '#DC3545'];
+  $status_colors = [
+    'rgba(255, 193, 7, 0.8)',   // Kuning (Menunggu)
+    'rgba(23, 162, 184, 0.8)',   // Biru (Sedang Berjalan)
+    'rgba(40, 167, 69, 0.8)',    // Hijau (Selesai)
+    'rgba(220, 53, 69, 0.8)'     // Merah (Dibatalkan)
+  ];
+  
+  // Warna dengan transparansi rendah untuk bar chart
+  $monthly_colors = [
+    'rgba(75, 192, 192, 0.7)',  // Hijau Tosca
+    'rgba(54, 162, 235, 0.7)',  // Biru
+    'rgba(153, 102, 255, 0.7)',  // Ungu
+    'rgba(255, 159, 64, 0.7)',  // Oranye
+    'rgba(255, 99, 132, 0.7)',  // Merah Muda
+    'rgba(255, 206, 86, 0.7)',  // Kuning
+    'rgba(75, 192, 192, 0.7)',  // Hijau Tosca
+    'rgba(54, 162, 235, 0.7)',  // Biru
+    'rgba(153, 102, 255, 0.7)',  // Ungu
+    'rgba(255, 159, 64, 0.7)',  // Oranye
+    'rgba(255, 99, 132, 0.7)',  // Merah Muda
+    'rgba(255, 206, 86, 0.7)'   // Kuning
+  ];
 
 } catch (PDOException $e) {
   error_log('Error getting monitoring data: ' . $e->getMessage());
@@ -98,14 +119,33 @@ try {
   $monitoring_counts = array_fill(0, 12, 0);
   $status_labels = ['Menunggu', 'Sedang Berjalan', 'Selesai', 'Dibatalkan'];
   $status_counts = [0, 0, 0, 0];
-  $status_colors = ['#FFC107', '#17A2B8', '#28A745', '#DC3545'];
+  $status_colors = [
+    'rgba(255, 193, 7, 0.8)',   // Kuning (Menunggu)
+    'rgba(23, 162, 184, 0.8)',   // Biru (Sedang Berjalan)
+    'rgba(40, 167, 69, 0.8)',    // Hijau (Selesai)
+    'rgba(220, 53, 69, 0.8)'     // Merah (Dibatalkan)
+  ];
+  $monthly_colors = [
+    'rgba(75, 192, 192, 0.7)',  // Hijau Tosca (repeat for 12 months)
+    'rgba(54, 162, 235, 0.7)',
+    'rgba(153, 102, 255, 0.7)',
+    'rgba(255, 159, 64, 0.7)',
+    'rgba(255, 99, 132, 0.7)',
+    'rgba(255, 206, 86, 0.7)',
+    'rgba(75, 192, 192, 0.7)',
+    'rgba(54, 162, 235, 0.7)',
+    'rgba(153, 102, 255, 0.7)',
+    'rgba(255, 159, 64, 0.7)',
+    'rgba(255, 99, 132, 0.7)',
+    'rgba(255, 206, 86, 0.7)'
+  ];
 }
 ?>
 
 <!-- Monitoring Section -->
-<section id="monitoring" class="monitoring-section">
+<section id="monitoring" class="monitoring-section py-5">
   <div class="container">
-    <div class="section-header" data-aos="fade-up">
+    <div class="section-header text-center mb-5">
       <h2>Monitoring & Evaluasi</h2>
       <p class="section-subheading">
         Data kegiatan monitoring dan evaluasi CDK Wilayah Bojonegoro
@@ -113,29 +153,29 @@ try {
     </div>
 
     <!-- Filter Tahun -->
-    <div class="monitoring-filter mb-4" data-aos="fade-up">
+    <div class="monitoring-filter mb-4">
       <div class="row justify-content-center">
         <div class="col-md-6 col-lg-4">
-          <div class="input-group">
+          <form action="index.php" method="get" class="input-group">
+            <input type="hidden" name="page" value="monitoring">
             <label class="input-group-text" for="monitoringYear">Tahun</label>
-            <select class="form-select" id="monitoringYear">
+            <select class="form-select" id="monitoringYear" name="year" onchange="this.form.submit()">
               <?php foreach ($available_years as $year): ?>
                 <option value="<?php echo $year; ?>" <?php echo ($year == $current_year) ? 'selected' : ''; ?>>
                   <?php echo $year; ?>
                 </option>
               <?php endforeach; ?>
             </select>
-            <button class="btn btn-primary" type="button" id="loadMonitoring">Tampilkan</button>
-          </div>
+          </form>
         </div>
       </div>
     </div>
 
     <!-- Monitoring Stats Cards -->
     <div class="row mb-4">
-      <div class="col-md-3 mb-3" data-aos="fade-up" data-aos-delay="100">
-        <div class="stat-card bg-primary text-white">
-          <div class="stat-icon">
+      <div class="col-md-3 col-6 mb-3">
+        <div class="stat-card bg-white text-dark border">
+          <div class="stat-icon text-primary">
             <i class="ri-file-list-3-line"></i>
           </div>
           <div class="stat-content">
@@ -144,9 +184,9 @@ try {
           </div>
         </div>
       </div>
-      <div class="col-md-3 mb-3" data-aos="fade-up" data-aos-delay="200">
-        <div class="stat-card bg-info text-white">
-          <div class="stat-icon">
+      <div class="col-md-3 col-6 mb-3">
+        <div class="stat-card bg-white text-dark border">
+          <div class="stat-icon text-info">
             <i class="ri-loader-line"></i>
           </div>
           <div class="stat-content">
@@ -155,9 +195,9 @@ try {
           </div>
         </div>
       </div>
-      <div class="col-md-3 mb-3" data-aos="fade-up" data-aos-delay="300">
-        <div class="stat-card bg-success text-white">
-          <div class="stat-icon">
+      <div class="col-md-3 col-6 mb-3">
+        <div class="stat-card bg-white text-dark border">
+          <div class="stat-icon text-success">
             <i class="ri-check-double-line"></i>
           </div>
           <div class="stat-content">
@@ -166,9 +206,9 @@ try {
           </div>
         </div>
       </div>
-      <div class="col-md-3 mb-3" data-aos="fade-up" data-aos-delay="400">
-        <div class="stat-card bg-warning text-dark">
-          <div class="stat-icon">
+      <div class="col-md-3 col-6 mb-3">
+        <div class="stat-card bg-white text-dark border">
+          <div class="stat-icon text-warning">
             <i class="ri-time-line"></i>
           </div>
           <div class="stat-content">
@@ -181,61 +221,41 @@ try {
 
     <!-- Monitoring Charts -->
     <div class="row mb-4">
-      <div class="col-md-8 mb-4" data-aos="fade-up">
-        <div class="monitoring-card">
-          <div class="card-header d-flex justify-content-between align-items-center">
-            <h4>Jumlah Monitoring Per Bulan (<?php echo $current_year; ?>)</h4>
-            <div class="chart-controls">
-              <div class="btn-group" role="group" aria-label="Tipe Chart">
-                <button type="button" class="btn btn-sm btn-outline-primary active" id="barChartBtn">
-                  <i class="ri-bar-chart-fill"></i> Bar
-                </button>
-                <button type="button" class="btn btn-sm btn-outline-primary" id="pieChartBtn">
-                  <i class="ri-pie-chart-fill"></i> Pie
-                </button>
-              </div>
-            </div>
+      <div class="col-lg-8 mb-4">
+        <div class="card h-100 shadow-sm">
+          <div class="card-header bg-white">
+            <h5 class="card-title mb-0">Jumlah Monitoring Per Bulan (<?php echo $current_year; ?>)</h5>
           </div>
           <div class="card-body">
-            <canvas id="monthlyMonitoringChart" height="300"></canvas>
+            <canvas id="monthlyMonitoringChart"></canvas>
           </div>
         </div>
       </div>
-      <div class="col-md-4 mb-4" data-aos="fade-up" data-aos-delay="200">
-        <div class="monitoring-card">
-          <div class="card-header d-flex justify-content-between align-items-center">
-            <h4>Status Monitoring</h4>
-            <div class="chart-controls">
-              <div class="btn-group" role="group" aria-label="Tipe Chart">
-                <button type="button" class="btn btn-sm btn-outline-primary" id="barStatusChartBtn">
-                  <i class="ri-bar-chart-fill"></i> Bar
-                </button>
-                <button type="button" class="btn btn-sm btn-outline-primary active" id="pieStatusChartBtn">
-                  <i class="ri-pie-chart-fill"></i> Pie
-                </button>
-              </div>
-            </div>
+      <div class="col-lg-4 mb-4">
+        <div class="card h-100 shadow-sm">
+          <div class="card-header bg-white">
+            <h5 class="card-title mb-0">Status Monitoring</h5>
           </div>
           <div class="card-body">
-            <canvas id="statusMonitoringChart" height="300"></canvas>
+            <canvas id="statusMonitoringChart"></canvas>
           </div>
         </div>
       </div>
     </div>
 
     <!-- Monitoring Table -->
-    <div class="row" data-aos="fade-up">
+    <div class="row">
       <div class="col-12">
-        <div class="monitoring-card">
-          <div class="card-header">
-            <h4>Daftar Kegiatan Monitoring Tahun <?php echo $current_year; ?></h4>
+        <div class="card shadow-sm">
+          <div class="card-header bg-white">
+            <h5 class="card-title mb-0">Daftar Kegiatan Monitoring Tahun <?php echo $current_year; ?></h5>
           </div>
-          <div class="card-body">
+          <div class="card-body p-0">
             <div class="table-responsive">
-              <table class="table table-striped table-hover">
-                <thead>
+              <table class="table table-hover mb-0">
+                <thead class="table-light">
                   <tr>
-                    <th>No</th>
+                    <th class="px-3">No</th>
                     <th>Tanggal</th>
                     <th>Lokasi</th>
                     <th>Kegiatan</th>
@@ -246,42 +266,43 @@ try {
                   <?php if (count($monitorings) > 0): ?>
                     <?php foreach ($monitorings as $index => $monitoring): ?>
                       <tr>
-                        <td><?php echo $index + 1; ?></td>
+                        <td class="px-3"><?php echo $index + 1; ?></td>
                         <td><?php echo date('d/m/Y', strtotime($monitoring['date'])); ?></td>
                         <td><?php echo htmlspecialchars($monitoring['location']); ?></td>
-                        <td><?php echo htmlspecialchars($monitoring['activity']); ?></td>
+                        <td><?php echo htmlspecialchars($monitoring['title']); ?></td>
                         <td>
                           <?php
+                          $status_text = '';
                           $status_class = '';
                           switch ($monitoring['status']) {
                             case 'pending':
-                              $status_class = 'bg-warning text-dark';
                               $status_text = 'Menunggu';
+                              $status_class = 'badge bg-warning text-dark';
                               break;
                             case 'in_progress':
-                              $status_class = 'bg-info text-white';
                               $status_text = 'Sedang Berjalan';
+                              $status_class = 'badge bg-info';
                               break;
                             case 'completed':
-                              $status_class = 'bg-success text-white';
                               $status_text = 'Selesai';
+                              $status_class = 'badge bg-success';
                               break;
                             case 'cancelled':
-                              $status_class = 'bg-danger text-white';
                               $status_text = 'Dibatalkan';
+                              $status_class = 'badge bg-danger';
                               break;
                             default:
-                              $status_text = ucfirst($monitoring['status']);
+                              $status_text = 'Tidak Diketahui';
+                              $status_class = 'badge bg-secondary';
                           }
                           ?>
-                          <span class="badge <?php echo $status_class; ?>"><?php echo $status_text; ?></span>
+                          <span class="<?php echo $status_class; ?>"><?php echo $status_text; ?></span>
                         </td>
                       </tr>
                     <?php endforeach; ?>
                   <?php else: ?>
                     <tr>
-                      <td colspan="5" class="text-center">Belum ada data monitoring untuk tahun
-                        <?php echo $current_year; ?>.</td>
+                      <td colspan="5" class="text-center py-4">Tidak ada data monitoring untuk tahun <?php echo $current_year; ?></td>
                     </tr>
                   <?php endif; ?>
                 </tbody>
@@ -291,315 +312,203 @@ try {
         </div>
       </div>
     </div>
-
-    <!-- Monitoring Description -->
-    <div class="row mt-5">
-      <div class="col-12" data-aos="fade-up">
-        <div class="monitoring-description">
-          <h4>Tentang Monitoring & Evaluasi</h4>
-          <p>
-            Monitoring dan evaluasi merupakan bagian penting dalam pengelolaan program kehutanan untuk memastikan
-            pencapaian target dan tujuan yang telah ditetapkan. CDK Wilayah Bojonegoro secara berkala melakukan
-            monitoring dan evaluasi terhadap program-program yang dilaksanakan.
-          </p>
-          <p>
-            Kegiatan monitoring meliputi pemantauan langsung ke lapangan, pengumpulan data dan informasi, serta
-            evaluasi pelaksanaan program. Hasil monitoring digunakan sebagai dasar untuk perbaikan program
-            dan pengambilan keputusan di masa mendatang.
-          </p>
-        </div>
-      </div>
-    </div>
   </div>
 </section>
 
-<!-- CSS Tambahan -->
-<style>
-  .stat-card {
-    border-radius: 8px;
-    padding: 20px;
-    margin-bottom: 20px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    display: flex;
-    align-items: center;
-    transition: transform 0.3s ease;
-  }
-
-  .stat-card:hover {
-    transform: translateY(-5px);
-  }
-
-  .stat-icon {
-    font-size: 2.5rem;
-    margin-right: 15px;
-  }
-
-  .stat-content h3 {
-    font-size: 1.8rem;
-    margin-bottom: 0;
-    font-weight: 700;
-  }
-
-  .stat-content p {
-    margin-bottom: 0;
-    opacity: 0.9;
-  }
-
-  .monitoring-card {
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    margin-bottom: 20px;
-    overflow: hidden;
-  }
-
-  .monitoring-card .card-header {
-    background-color: #f8f9fa;
-    padding: 15px 20px;
-    border-bottom: 1px solid #e9ecef;
-  }
-
-  .monitoring-card .card-header h4 {
-    margin-bottom: 0;
-    font-weight: 600;
-  }
-
-  .monitoring-card .card-body {
-    padding: 20px;
-  }
-
-  .monitoring-description {
-    background-color: #f8f9fa;
-    padding: 25px;
-    border-radius: 8px;
-    margin-top: 20px;
-  }
-
-  .monitoring-description h4 {
-    font-weight: 600;
-    margin-bottom: 15px;
-  }
-
-  .monitoring-description p {
-    margin-bottom: 15px;
-    line-height: 1.6;
-  }
-
-  .table th {
-    font-weight: 600;
-  }
-
-  .chart-controls .btn-group {
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  }
-
-  .chart-controls .btn {
-    font-size: 0.875rem;
-  }
-
-  .chart-controls .btn i {
-    margin-right: 3px;
-  }
-</style>
-
-<!-- Script untuk chart -->
+<!-- Script untuk Chart Monitoring -->
 <script>
-  document.addEventListener('DOMContentLoaded', function () {
-    try {
-      // Memastikan Chart.js tersedia
-      if (typeof Chart === 'undefined') {
-        console.error('Chart.js is not loaded!');
-        loadChartJsScript();
-        return;
-      }
-
-      // Variabel global untuk menyimpan chart
-      let monthlyChart = null;
-      let statusChart = null;
-
-      // Data untuk chart
-      const monthlyData = {
+document.addEventListener('DOMContentLoaded', function() {
+  // Cek apakah Chart.js tersedia
+  if (typeof Chart === 'undefined') {
+    document.querySelectorAll('.chart-container').forEach(container => {
+      container.innerHTML = '<div class="alert alert-warning">Chart tidak dapat dimuat. Chart.js tidak tersedia.</div>';
+    });
+    return;
+  }
+  
+  // Data untuk chart monitoring per bulan
+  const monthlyMonitoringChart = new Chart(
+    document.getElementById('monthlyMonitoringChart'),
+    {
+      type: 'bar',
+      data: {
         labels: <?php echo json_encode($monitoring_months); ?>,
         datasets: [{
-          label: 'Jumlah Kegiatan',
+          label: 'Jumlah Monitoring',
           data: <?php echo json_encode($monitoring_counts); ?>,
-          backgroundColor: 'rgba(54, 162, 235, 0.7)',
-          borderColor: 'rgba(54, 162, 235, 1)',
-          borderWidth: 1
+          backgroundColor: <?php echo json_encode($monthly_colors); ?>,
+          borderWidth: 0
         }]
-      };
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false
+          },
+          tooltip: {
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            bodyFont: {
+              size: 14
+            },
+            callbacks: {
+              label: function(context) {
+                return `Jumlah: ${context.parsed.y} monitoring`;
+              }
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              precision: 0,
+              font: {
+                size: 12
+              }
+            },
+            grid: {
+              color: 'rgba(0, 0, 0, 0.05)'
+            }
+          },
+          x: {
+            ticks: {
+              font: {
+                size: 12
+              }
+            },
+            grid: {
+              display: false
+            }
+          }
+        }
+      }
+    }
+  );
 
-      const statusData = {
+  // Data untuk chart status monitoring
+  const statusMonitoringChart = new Chart(
+    document.getElementById('statusMonitoringChart'),
+    {
+      type: 'pie',
+      data: {
         labels: <?php echo json_encode($status_labels); ?>,
         datasets: [{
           data: <?php echo json_encode($status_counts); ?>,
           backgroundColor: <?php echo json_encode($status_colors); ?>,
           borderWidth: 0
         }]
-      };
-
-      // Inisialisasi chart
-      createMonthlyChart('bar');
-      createStatusChart('doughnut');
-
-      // Event listener untuk tombol chart bulanan
-      document.getElementById('barChartBtn').addEventListener('click', function () {
-        this.classList.add('active');
-        document.getElementById('pieChartBtn').classList.remove('active');
-        updateMonthlyChart('bar');
-      });
-
-      document.getElementById('pieChartBtn').addEventListener('click', function () {
-        this.classList.add('active');
-        document.getElementById('barChartBtn').classList.remove('active');
-        updateMonthlyChart('pie');
-      });
-
-      // Event listener untuk tombol chart status
-      document.getElementById('barStatusChartBtn').addEventListener('click', function () {
-        this.classList.add('active');
-        document.getElementById('pieStatusChartBtn').classList.remove('active');
-        updateStatusChart('bar');
-      });
-
-      document.getElementById('pieStatusChartBtn').addEventListener('click', function () {
-        this.classList.add('active');
-        document.getElementById('barStatusChartBtn').classList.remove('active');
-        updateStatusChart('doughnut');
-      });
-
-      // Event listener untuk filter tahun
-      const loadMonitoringBtn = document.getElementById('loadMonitoring');
-      if (loadMonitoringBtn) {
-        loadMonitoringBtn.addEventListener('click', function () {
-          const year = document.getElementById('monitoringYear').value;
-          window.location.href = `?page=monitoring&year=${year}`;
-        });
-      }
-
-      // Fungsi untuk memuat Chart.js jika belum tersedia
-      function loadChartJsScript() {
-        const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/chart.js';
-        script.onload = function () {
-          createMonthlyChart('bar');
-          createStatusChart('doughnut');
-        };
-        document.head.appendChild(script);
-      }
-
-      // Fungsi untuk membuat chart bulanan
-      function createMonthlyChart(type) {
-        const ctx = document.getElementById('monthlyMonitoringChart').getContext('2d');
-
-        // Hancurkan chart sebelumnya jika ada
-        if (monthlyChart) {
-          monthlyChart.destroy();
-        }
-
-        // Opsi chart berdasarkan tipe
-        const options = {
-          responsive: true,
-          plugins: {
-            legend: {
-              display: true,
-              position: 'top'
-            },
-            tooltip: {
-              mode: 'index',
-              intersect: false
-            }
-          }
-        };
-
-        // Tambahkan opsi khusus untuk tipe bar
-        if (type === 'bar') {
-          options.scales = {
-            y: {
-              beginAtZero: true,
-              ticks: {
-                stepSize: 1,
-                precision: 0
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              boxWidth: 15,
+              padding: 15,
+              font: {
+                size: 13
               }
             }
-          };
-        }
-
-        // Buat chart baru
-        monthlyChart = new Chart(ctx, {
-          type: type,
-          data: monthlyData,
-          options: options
-        });
-      }
-
-      // Fungsi untuk update chart bulanan
-      function updateMonthlyChart(type) {
-        createMonthlyChart(type);
-      }
-
-      // Fungsi untuk membuat chart status
-      function createStatusChart(type) {
-        const ctx = document.getElementById('statusMonitoringChart').getContext('2d');
-
-        // Hancurkan chart sebelumnya jika ada
-        if (statusChart) {
-          statusChart.destroy();
-        }
-
-        // Opsi chart berdasarkan tipe
-        const options = {
-          responsive: true,
-          plugins: {
-            legend: {
-              position: 'bottom'
+          },
+          tooltip: {
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            bodyFont: {
+              size: 14
             },
-            tooltip: {
-              callbacks: {
-                label: function (context) {
-                  const label = context.label || '';
-                  const value = context.raw || 0;
-                  const total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
-                  const percentage = Math.round((value / total) * 100);
-                  return `${label}: ${value} (${percentage}%)`;
-                }
+            callbacks: {
+              label: function(context) {
+                const value = context.parsed;
+                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                const percentage = total ? Math.round((value / total) * 100) : 0;
+                return `${context.label}: ${value} (${percentage}%)`;
               }
             }
           }
-        };
-
-        // Tambahkan opsi khusus untuk tipe doughnut/pie
-        if (type === 'doughnut') {
-          options.cutout = '65%';
         }
-
-        // Tambahkan opsi khusus untuk tipe bar
-        if (type === 'bar') {
-          options.scales = {
-            y: {
-              beginAtZero: true,
-              ticks: {
-                stepSize: 1,
-                precision: 0
-              }
-            }
-          };
-        }
-
-        // Buat chart baru
-        statusChart = new Chart(ctx, {
-          type: type,
-          data: statusData,
-          options: options
-        });
       }
-
-      // Fungsi untuk update chart status
-      function updateStatusChart(type) {
-        createStatusChart(type);
-      }
-
-    } catch (error) {
-      console.error('Error in monitoring charts script:', error);
     }
-  });
+  );
+});
+</script>
+
+<style>
+/* Styles untuk Monitoring Section */
+.monitoring-section {
+  background-color: #f8f9fa;
+  padding: 80px 0;
+}
+
+.stat-card {
+  background-color: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+  padding: 20px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  transition: transform 0.2s;
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+}
+
+.stat-icon {
+  font-size: 2.5rem;
+  margin-right: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stat-content h3 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 5px;
+}
+
+.stat-content p {
+  margin-bottom: 0;
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+.card {
+  border-radius: 10px;
+  border: none;
+  transition: box-shadow 0.3s;
+}
+
+.card:hover {
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1) !important;
+}
+
+.card-header {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  padding: 15px 20px;
+}
+
+.card-title {
+  font-weight: 600;
+  color: #343a40;
+}
+
+.table th {
+  font-weight: 600;
+  color: #495057;
+}
+
+.table td {
+  vertical-align: middle;
+}
+
+.badge {
+  font-weight: 500;
+  padding: 0.4em 0.7em;
+}
+</style>
 </script>

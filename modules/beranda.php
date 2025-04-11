@@ -253,6 +253,12 @@ $featured_posts = getPosts(2, true);
 <!-- Script untuk peta -->
 <script>
   document.addEventListener('DOMContentLoaded', function () {
+    // Check if Leaflet is available
+    if (typeof L === 'undefined') {
+        mapContainer.innerHTML = '<div class="alert alert-warning">Peta tidak dapat dimuat. Leaflet.js tidak tersedia.</div>';
+        return;
+    }
+
     // Inisialisasi peta menggunakan Leaflet.js (pastikan sudah include library Leaflet di header)
     if (typeof L !== 'undefined') {
       // Koordinat pusat Jawa Timur
@@ -291,9 +297,6 @@ $featured_posts = getPosts(2, true);
         fillOpacity: 0.3
       }).addTo(map);
       workAreaPolygon.bindPopup("Kawasan Hutan CDK Wilayah Bojonegoro");
-    } else {
-      console.error('Leaflet library not found. Please include Leaflet.js');
-      document.getElementById('east-java-map').innerHTML = '<div class="alert alert-warning">Peta tidak dapat dimuat. Pastikan koneksi internet Anda aktif.</div>';
     }
   });
 </script>

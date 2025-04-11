@@ -26,52 +26,34 @@ function loadScriptAsync(src, callback) {
 }
 
 // Global error handler
-window.addEventListener("error", function (event) {
-  console.error("Global error caught:", event.error || event.message);
+window.addEventListener('error', function(event) {
+  // Capture and handle uncaught errors
+  const errorInfo = {
+    message: event.message || "Unknown error",
+    source: event.filename || "",
+    lineno: event.lineno || 0,
+    colno: event.colno || 0
+  };
   
-  // Cegah notifikasi untuk beberapa error yang diketahui
-  if (event.message.includes("particles.js") || 
-      event.message.includes("map") || 
-      event.message.includes("chart")) {
-    event.preventDefault();
-    return true;
+  // Send to analytics if available
+  if (typeof gtag === 'function') {
+    gtag('event', 'exception', {
+      'description': `${errorInfo.message} (${errorInfo.source}:${errorInfo.lineno})`,
+      'fatal': false
+    });
   }
   
-  hideLoadingOverlay();
-
-  // Show error message to user - only for critical errors
-  if (!event.message.includes("Script error") && !event.message.includes("null")) {
-    const errorMessage = document.createElement("div");
-    errorMessage.className = "alert alert-danger fixed-top m-3";
-    errorMessage.style.zIndex = "9999";
-    errorMessage.innerHTML = `
-      <strong>Terjadi kesalahan:</strong> 
-      <p>${event.error ? event.error.message : event.message}</p>
-      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    `;
-    document.body.appendChild(errorMessage);
-
-    // Auto-remove after 10 seconds
-    setTimeout(() => {
-      if (document.body.contains(errorMessage)) {
-        document.body.removeChild(errorMessage);
-      }
-    }, 10000);
-  }
-
-  return false;
+  return false; // Let default error handler run
 });
 
 // Error Handler
 const handleError = (error) => {
-  console.error("An error occurred:", error);
-  // Only show user visible error for critical errors
-  if (error && !error.toString().includes("map") && !error.toString().includes("particles") && !error.toString().includes("chart")) {
-    const errorMessage = document.createElement("div");
-    errorMessage.className = "alert alert-danger";
-    errorMessage.textContent = "Terjadi kesalahan. Silakan coba lagi nanti.";
-    document.body.appendChild(errorMessage);
-    setTimeout(() => errorMessage.remove(), 5000);
+  // Log error to analytics if available
+  if (typeof gtag === 'function') {
+    gtag('event', 'exception', {
+      'description': error.message || "Unknown error",
+      'fatal': false
+    });
   }
 };
 
@@ -185,7 +167,6 @@ document.addEventListener("DOMContentLoaded", function () {
       // Pemeriksaan elemen map sebelum inisialisasi
       const mapElement = document.getElementById("map");
       if (!mapElement) {
-        console.log("Map container not found. Skipping map initialization.");
         return; // Keluar dari fungsi jika elemen map tidak ditemukan
       }
 
@@ -193,7 +174,7 @@ document.addEventListener("DOMContentLoaded", function () {
       // ...rest of code
     }
   } catch (error) {
-    console.warn("Map initialization skipped:", error.message);
+    // Map initialization skipped
   }
 });
 
@@ -246,13 +227,10 @@ document.addEventListener('DOMContentLoaded', function() {
   try {
     // Hanya inisialisasi chart jika ini adalah halaman beranda atau halaman penuh
     if (typeof isFullPage === 'undefined' || isFullPage) {
-      console.log('DOM loaded, initializing charts');
       initializeCharts();
-    } else {
-      console.log('DOM loaded, skipping charts on partial page');
     }
   } catch (error) {
-    console.warn('Chart initialization skipped:', error.message);
+    // Chart initialization skipped
   }
 });
 
@@ -262,13 +240,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Cek apakah ini halaman penuh dan particles-js ada
     if ((typeof isFullPage === 'undefined' || isFullPage) && document.getElementById('particles-js')) {
       // Load particles.js script secara kondisional
-      console.log('Loading particles.js');
       // Particles config bisa ditambahkan di sini
-    } else {
-      console.log('Skipping particles.js on partial page');
     }
   } catch (error) {
-    console.warn('Particles initialization skipped:', error.message);
+    // Particles initialization skipped
   }
 });
 
@@ -422,29 +397,22 @@ document.addEventListener("DOMContentLoaded", function () {
     lazyLoadImages();
     initCounters();
 
-    console.log("DOM loaded, initializing charts");
-
     // Initialize charts
     initializeCharts();
 
     // Check if monitoring chart element exists and initialize it
     if (document.getElementById("achievementChart")) {
-      console.log("Achievement chart element found, initializing");
       initializeMonitoringCharts();
-    } else {
-      console.log("Achievement chart element not found on initial load");
     }
 
     // Listen for chart data ready event from statistik.php
     document.addEventListener("chartDataReady", function () {
-      console.log("chartDataReady event received");
       // Reinitialize charts with new data
       initializeCharts(true);
     });
 
     // Listen for chart data ready event from monitoring.php
     document.addEventListener("monitoringChartDataReady", function () {
-      console.log("monitoringChartDataReady event received");
       // Reinitialize monitoring charts with new data
       initializeMonitoringCharts(true);
     });
@@ -454,9 +422,38 @@ document.addEventListener("DOMContentLoaded", function () {
     if (loadingOverlay) {
       loadingOverlay.style.display = "none";
     }
-    console.error("Initialization error:", error);
   }
 });
+
+// Map initialization
+function initializeMap() {
+  try {
+    // If either Leaflet or the map container are not available, exit
+    if (typeof L === 'undefined') {
+      return;
+    }
+    
+    const mapContainer = document.getElementById('locationMap');
+    if (!mapContainer) {
+      return;
+    }
+    
+    // Initialize map with default location (Bojonegoro)
+    const map = L.map('locationMap').setView([-7.15, 111.87], 10);
+    
+    // Add OpenStreetMap layer
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+    
+    // Add marker for CDK office with popup
+    L.marker([-7.15, 111.87]).addTo(map)
+      .bindPopup("<b>CDK Wilayah Bojonegoro</b><br>Jl. Veteran No. 8, Bojonegoro")
+      .openPopup();
+  } catch (error) {
+    // Map initialization failed
+  }
+}
 
 // Function to initialize charts
 function initializeCharts(useCustomData = false) {
@@ -555,34 +552,78 @@ function initializeCharts(useCustomData = false) {
     });
   }
 
+  // Use custom data if available
+  let chartData = defaultData;
+  if (useCustomData && window.forestAreaChartData) {
+    // Pastikan data tidak kosong
+    if (
+      window.achievementChartData.labels &&
+      window.achievementChartData.labels.length > 0 &&
+      window.achievementChartData.datasets &&
+      window.achievementChartData.datasets[0].data &&
+      window.achievementChartData.datasets[0].data.length > 0
+    ) {
+      chartData = window.achievementChartData;
+    }
+  }
+
   // Add event listeners for chart type buttons
   document.querySelectorAll("[data-chart-type]").forEach((button) => {
     // Remove existing event listeners to prevent duplicates
     const newButton = button.cloneNode(true);
     button.parentNode.replaceChild(newButton, button);
 
-    newButton.addEventListener("click", function () {
+    newButton.addEventListener("click", function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+  
+      // Hanya lanjutkan jika bukan di halaman statistik
+      if (window.location.href.includes('statistik')) {
+        return;
+      }
+      
       const chartType = this.getAttribute("data-chart-type");
       const targetChart = this.getAttribute("data-target");
-
-      // Update active state on buttons
-      this.closest(".card-tools")
-        .querySelectorAll("button")
-        .forEach((btn) => {
-          btn.classList.remove("active");
-        });
-      this.classList.add("active");
-
-      // Update chart type
-      if (targetChart === "forestAreaChart" && window.forestAreaChartInstance) {
-        window.forestAreaChartInstance.config.type = chartType;
-        window.forestAreaChartInstance.update();
-      } else if (
-        targetChart === "forestProductionChart" &&
-        window.forestProductionChartInstance
-      ) {
-        window.forestProductionChartInstance.config.type = chartType;
-        window.forestProductionChartInstance.update();
+      
+      try {
+        // Update active state on buttons
+        const btnGroup = this.closest(".card-tools");
+        if (btnGroup) {
+          btnGroup
+            .querySelectorAll("button")
+            .forEach((btn) => {
+              btn.classList.remove("active");
+            });
+          this.classList.add("active");
+        } else {
+          // Jika tidak menemukan parent .card-tools, coba cari parent .btn-group
+          const btnGroupAlt = this.closest(".btn-group");
+          if (btnGroupAlt) {
+            btnGroupAlt
+              .querySelectorAll("button")
+              .forEach((btn) => {
+                btn.classList.remove("active");
+              });
+            this.classList.add("active");
+          } else {
+            // Jika tidak ada parent container, hanya aktifkan tombol ini
+            this.classList.add("active");
+          }
+        }
+  
+        // Update chart type
+        if (targetChart === "forestAreaChart" && window.forestAreaChartInstance) {
+          window.forestAreaChartInstance.config.type = chartType;
+          window.forestAreaChartInstance.update();
+        } else if (
+          targetChart === "forestProductionChart" &&
+          window.forestProductionChartInstance
+        ) {
+          window.forestProductionChartInstance.config.type = chartType;
+          window.forestProductionChartInstance.update();
+        }
+      } catch (error) {
+        // Error updating chart
       }
     });
   });
@@ -605,17 +646,13 @@ function initializeCharts(useCustomData = false) {
 function initializeMonitoringCharts(useCustomData = false) {
   const achievementChart = document.getElementById("achievementChart");
 
-  // Debug: Log jika elemen chart tidak ditemukan
+  // Exit if chart element not found
   if (!achievementChart) {
-    console.log("Achievement chart element not found");
     return;
   }
 
-  console.log("Initializing achievement chart", achievementChart);
-
   // Destroy existing chart if it exists
   if (window.achievementChartInstance) {
-    console.log("Destroying existing achievement chart instance");
     window.achievementChartInstance.destroy();
   }
 
@@ -640,11 +677,6 @@ function initializeMonitoringCharts(useCustomData = false) {
   // Use custom data if available
   let chartData = defaultData;
   if (useCustomData && window.achievementChartData) {
-    console.log(
-      "Using custom achievement chart data:",
-      window.achievementChartData
-    );
-
     // Pastikan data tidak kosong
     if (
       window.achievementChartData.labels &&
@@ -654,13 +686,7 @@ function initializeMonitoringCharts(useCustomData = false) {
       window.achievementChartData.datasets[0].data.length > 0
     ) {
       chartData = window.achievementChartData;
-    } else {
-      console.warn(
-        "Custom achievement data is empty or invalid, using default data"
-      );
     }
-  } else {
-    console.log("Using default achievement chart data");
   }
 
   try {
@@ -689,9 +715,8 @@ function initializeMonitoringCharts(useCustomData = false) {
         },
       },
     });
-    console.log("Achievement chart initialized successfully");
   } catch (error) {
-    console.error("Error initializing achievement chart:", error);
+    // Error initializing achievement chart
   }
 }
 
@@ -703,35 +728,39 @@ window.addEventListener("beforeunload", () => {
 
 // Gallery Functionality
 const initGallery = () => {
-  const galleryContainer = document.querySelector(".gallery-container");
-  const filterBtns = document.querySelectorAll(".gallery-filter .btn");
+  try {
+    const galleryContainer = document.querySelector(".gallery-container");
+    const filterBtns = document.querySelectorAll(".gallery-filter .btn");
+    
+    if (!galleryContainer || filterBtns.length === 0) return;
+    
+    filterBtns.forEach((btn) => {
+      btn.addEventListener("click", function () {
+        // Remove active class from all buttons
+        filterBtns.forEach((btn) => btn.classList.remove("active"));
+        // Add active class to clicked button
+        this.classList.add("active");
 
-  if (!galleryContainer || filterBtns.length === 0) return;
+        const filterValue = this.getAttribute("data-filter");
+        const items = galleryContainer.querySelectorAll(".gallery-item");
 
-  filterBtns.forEach((btn) => {
-    btn.addEventListener("click", function () {
-      // Remove active class from all buttons
-      filterBtns.forEach((btn) => btn.classList.remove("active"));
-      // Add active class to clicked button
-      this.classList.add("active");
-
-      const filterValue = this.getAttribute("data-filter");
-      const items = galleryContainer.querySelectorAll(".gallery-item");
-
-      items.forEach((item) => {
-        if (filterValue === "all" || item.classList.contains(filterValue)) {
-          item.style.display = "block";
-          // Optional: Add fade-in animation
-          item.style.opacity = "0";
-          setTimeout(() => {
-            item.style.opacity = "1";
-          }, 100);
-        } else {
-          item.style.display = "none";
-        }
+        items.forEach((item) => {
+          if (filterValue === "all" || item.classList.contains(filterValue)) {
+            item.style.display = "block";
+            // Optional: Add fade-in animation
+            item.style.opacity = "0";
+            setTimeout(() => {
+              item.style.opacity = "1";
+            }, 100);
+          } else {
+            item.style.display = "none";
+          }
+        });
       });
     });
-  });
+  } catch (error) {
+    // Gallery initialization error
+  }
 };
 
 // Gallery Popup
@@ -771,7 +800,7 @@ document.addEventListener("DOMContentLoaded", function () {
     initGallery();
     initGalleryPopup();
   } catch (error) {
-    console.log("Gallery initialization error:", error);
+    // Gallery initialization error
   }
 });
 
@@ -812,42 +841,46 @@ document.addEventListener("DOMContentLoaded", function () {
 
 // Counter Animation
 const initCounters = () => {
-  const counters = document.querySelectorAll("[data-counter]");
+  try {
+    const counters = document.querySelectorAll("[data-counter]");
 
-  const animateCounter = (counter) => {
-    const target = parseInt(counter.getAttribute("data-counter"));
-    let current = 0;
-    const increment = target / 50; // Adjust speed here
-    const duration = 2000; // 2 seconds
-    const step = duration / 50;
+    const animateCounter = (counter) => {
+      const target = parseInt(counter.getAttribute("data-counter"));
+      let current = 0;
+      const increment = target / 50; // Adjust speed here
+      const duration = 2000; // 2 seconds
+      const step = duration / 50;
 
-    const updateCounter = () => {
-      current += increment;
-      if (current > target) {
-        counter.textContent = target.toLocaleString() + "+";
-      } else {
-        counter.textContent = Math.floor(current).toLocaleString() + "+";
-        requestAnimationFrame(updateCounter);
-      }
+      const updateCounter = () => {
+        current += increment;
+        if (current > target) {
+          counter.textContent = target.toLocaleString() + "+";
+        } else {
+          counter.textContent = Math.floor(current).toLocaleString() + "+";
+          requestAnimationFrame(updateCounter);
+        }
+      };
+
+      updateCounter();
     };
 
-    updateCounter();
-  };
+    const observerCallback = (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          animateCounter(entry.target);
+          observer.unobserve(entry.target);
+        }
+      });
+    };
 
-  const observerCallback = (entries) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) {
-        animateCounter(entry.target);
-        observer.unobserve(entry.target);
-      }
+    const observer = new IntersectionObserver(observerCallback, {
+      threshold: 0.5,
     });
-  };
 
-  const observer = new IntersectionObserver(observerCallback, {
-    threshold: 0.5,
-  });
-
-  counters.forEach((counter) => observer.observe(counter));
+    counters.forEach((counter) => observer.observe(counter));
+  } catch (error) {
+    // Counter initialization error
+  }
 };
 
 // Initialize when DOM is loaded
@@ -855,7 +888,7 @@ document.addEventListener("DOMContentLoaded", function () {
   try {
     initCounters();
   } catch (error) {
-    console.log("Counter initialization error:", error);
+    // Counter initialization error
   }
 });
 
@@ -905,7 +938,7 @@ document.addEventListener("DOMContentLoaded", function () {
     // Tambahkan marker atau elemen lain yang dibutuhkan
     // L.marker([-7.150975, 111.8813844]).addTo(map);
   } else {
-    console.log("Map container not found. Skipping map initialization.");
+    // Map container not found, skipping initialization
   }
 
   // Alternatif: Jika elemen peta hanya ada di halaman tertentu
@@ -914,16 +947,13 @@ document.addEventListener("DOMContentLoaded", function () {
     window.location.href.includes("page=peta") ||
     document.querySelector(".peta-section")
   ) {
-    console.error(
-      "Halaman seharusnya memiliki peta, tapi container #map tidak ditemukan!"
-    );
+    // Page should have map but container not found
   }
 });
 
 // ATAU gunakan pendekatan lazy-loading jika peta hanya dimuat pada kondisi tertentu
 function initializeMap() {
   if (!document.getElementById("map")) {
-    console.error("Map container not found!");
     return;
   }
 

@@ -72,14 +72,19 @@ if ($page != 'beranda') {
     
     <!-- Error handling for resource loading -->
     <script>
-    // Handle resource loading errors
-    window.addEventListener('error', function(e) {
-        // Only handle resource loading errors
-        if (e.target && (e.target.tagName === 'LINK' || e.target.tagName === 'SCRIPT' || e.target.tagName === 'IMG')) {
-            console.warn('Resource loading error:', e.target.src || e.target.href);
-            e.preventDefault();
-            return true;
+    // Pantau loading resource untuk debugging
+    document.addEventListener('error', function(e) {
+      const target = e.target;
+      if (target.tagName === 'IMG' || target.tagName === 'SCRIPT' || target.tagName === 'LINK') {
+        // Log resource loading error to analytics if available
+        if (typeof gtag === 'function') {
+          gtag('event', 'resource_error', {
+            resource_type: target.tagName.toLowerCase(),
+            resource_url: target.src || target.href,
+            page_url: window.location.href
+          });
         }
+      }
     }, true);
     </script>
     
@@ -112,7 +117,9 @@ if ($page != 'beranda') {
     />
     <link
       rel="stylesheet"
-      href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
     />
     <link
       rel="stylesheet"
@@ -121,6 +128,7 @@ if ($page != 'beranda') {
 
     <link rel="stylesheet" href="assets/css/styles.css" />
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <?php 
     // Muat CSS publikasi jika halaman publikasi atau terdapat parameter view/id
     $load_publikasi_css = ($page === 'publikasi');
@@ -132,6 +140,7 @@ if ($page != 'beranda') {
     <link rel="stylesheet" href="assets/css/publikasi.css" />
     <?php endif; ?>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
     <!-- Kondisional loading script -->
     <script>
@@ -486,6 +495,26 @@ if ($page != 'beranda') {
         }
       }, 5000);
     </script>
+
+    <!-- Module-specific CSS -->
+    <?php if ($page == 'publikasi-detail' && isset($_GET['view']) && $_GET['view'] == 'documents'): ?>
+    <link rel="stylesheet" href="assets/css/modules/documents.css" />
+    <?php endif; ?>
+    
+    <?php if ($page == 'publikasi-list'): ?>
+    <link rel="stylesheet" href="assets/css/modules/publikasi.css" />
+    <?php endif; ?>
+    
+    <!-- Leaflet CSS and JS -->
+    <script 
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      crossorigin="">
+    </script>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/swiper/swiper-bundle.min.css"
+    />
   </head>
   <body>
     <!-- Loading Overlay -->
