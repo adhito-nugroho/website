@@ -28,7 +28,6 @@ if ($page != 'beranda') {
         'layanan' => 'Layanan Kehutanan',
         'program' => 'Program & Kegiatan',
         'statistik' => 'Data & Statistik',
-        'monitoring' => 'Monitoring & Evaluasi',
         'publikasi' => 'Publikasi & Informasi',
         'galeri' => 'Galeri Kegiatan',
         'kontak' => 'Hubungi Kami'
@@ -416,9 +415,7 @@ if ($page != 'beranda') {
         position: relative;
       }
 
-      .monitoring-section {
-        background: var(--bg-light);
-      }
+
 
       /* Remove background from section header */
       .section-header {
@@ -515,6 +512,304 @@ if ($page != 'beranda') {
       rel="stylesheet"
       href="https://unpkg.com/swiper/swiper-bundle.min.css"
     />
+    
+    <!-- Google Fonts - Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Modern UI Theme CSS -->
+    <style>
+      :root {
+        /* Modern Color Palette */
+        --primary-color: #1e8a5c;     /* Lebih vibrant green */
+        --primary-dark: #146644;      /* Darker green */
+        --primary-light: #47bb89;     /* Lighter green */
+        
+        /* Secondary Colors - Lebih modern */
+        --secondary-color: #3db6e9;   /* Modern blue */
+        --secondary-light: #98e5ff;   /* Light blue */
+        --secondary-dark: #0179a8;    /* Dark blue */
+        
+        /* Accent Colors */
+        --accent-color: #ffd166;      /* Modern yellow */
+        --accent-light: #ffe7a9;      /* Light yellow */
+        --accent-dark: #e6b800;       /* Dark yellow */
+        
+        /* Background Colors - Modern & Clean */
+        --bg-light: #f8faf9;          /* Clean off-white */
+        --bg-white: #ffffff;
+        --bg-gray: #eef2f3;
+        --bg-gradient: linear-gradient(135deg, #f8fcfa, #eef8f3);
+        
+        /* Text Colors - Enhanced Readability */
+        --text-dark: #1a2c2f;          /* Dark teal for better contrast */
+        --text-medium: #4d6369;        /* Medium teal */
+        --text-light: #6e8b94;         /* Light teal */
+        
+        /* Status Colors - More Vibrant */
+        --success-color: #04a777;      /* Vibrant green */
+        --info-color: #0ea5e9;         /* Vibrant blue */
+        --warning-color: #f59e0b;      /* Vibrant orange */
+        --error-color: #f43f5e;        /* Modern pink/red */
+        
+        /* Shadow & Border - More Subtle */
+        --border-color: #e9f0f2;
+        --shadow-sm: 0 4px 6px rgba(47, 121, 138, 0.07);
+        --shadow-md: 0 8px 15px rgba(47, 121, 138, 0.1);
+        --shadow-lg: 0 15px 25px rgba(47, 121, 138, 0.12);
+        
+        /* Radius Values */
+        --radius-sm: 6px;
+        --radius-md: 12px;
+        --radius-lg: 18px;
+        --radius-xl: 24px;
+        
+        /* Animation */
+        --transition-fast: 0.2s;
+        --transition-normal: 0.3s;
+        --transition-slow: 0.5s;
+        
+        /* Dark Mode Colors */
+        --dark-bg: #121619;
+        --dark-card-bg: #1e2328;
+        --dark-border: #2a3139;
+        --dark-text: #e5e7eb;
+        --dark-text-muted: #9ca3af;
+      }
+
+      /* Dark Mode Toggle */
+      .theme-switch-wrapper {
+        display: flex;
+        align-items: center;
+        margin-left: 15px;
+      }
+
+      .theme-switch {
+        display: inline-block;
+        position: relative;
+        width: 45px;
+        height: 24px;
+        margin: 0;
+      }
+
+      .theme-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+
+      .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(255,255,255,0.3);
+        transition: var(--transition-normal);
+        border-radius: 34px;
+      }
+
+      .slider:before {
+        position: absolute;
+        content: "";
+        height: 18px;
+        width: 18px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: var(--transition-normal);
+        border-radius: 50%;
+      }
+
+      input:checked + .slider {
+        background-color: var(--accent-color);
+      }
+
+      input:checked + .slider:before {
+        transform: translateX(21px);
+      }
+
+      /* Modern UI Enhancements */
+      body {
+        font-family: 'Poppins', sans-serif;
+        background: var(--bg-light);
+        transition: background-color var(--transition-normal);
+      }
+
+      .card, .dashboard-card, .statistic-card {
+        border: none;
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-sm);
+        transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+        overflow: hidden;
+      }
+
+      .card:hover, .dashboard-card:hover, .statistic-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-md);
+      }
+
+      .btn {
+        font-weight: 500;
+        border-radius: var(--radius-sm);
+        padding: 0.6rem 1.2rem;
+        transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+      }
+
+      .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-sm);
+      }
+
+      .navbar {
+        background: linear-gradient(90deg, var(--primary-dark), var(--primary-color));
+        box-shadow: var(--shadow-md);
+        height: var(--navbar-height);
+      }
+
+      .navbar.scrolled {
+        background: linear-gradient(90deg, var(--primary-dark), var(--primary-color));
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      }
+
+      .section-header h2 {
+        font-weight: 700;
+        color: var(--primary-dark);
+        margin-bottom: 1rem;
+      }
+
+      .section-header::after {
+        content: '';
+        display: block;
+        width: 70px;
+        height: 3px;
+        background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+        margin: 1rem auto 0;
+        border-radius: 3px;
+      }
+
+      /* Dark Mode Styles */
+      .dark-mode {
+        background-color: var(--dark-bg);
+        color: var(--dark-text);
+      }
+
+      .dark-mode .card, 
+      .dark-mode .dashboard-card,
+      .dark-mode .statistic-card {
+        background-color: var(--dark-card-bg);
+        border-color: var(--dark-border);
+        color: var(--dark-text);
+      }
+
+      .dark-mode .text-dark {
+        color: var(--dark-text) !important;
+      }
+
+      .dark-mode .bg-light {
+        background-color: var(--dark-card-bg) !important;
+      }
+
+      .dark-mode .navbar {
+        background: linear-gradient(90deg, #0c3725, #1a5e41);
+      }
+
+      .dark-mode .section-header h2 {
+        color: var(--dark-text);
+      }
+
+      .dark-mode .section-subheading {
+        color: var(--dark-text-muted);
+      }
+      
+      /* Modern table styles */
+      table.table {
+        border-radius: var(--radius-md);
+        overflow: hidden;
+        box-shadow: var(--shadow-sm);
+      }
+      
+      .table thead th {
+        background-color: var(--primary-light);
+        color: white;
+        font-weight: 500;
+        border: none;
+      }
+      
+      .dark-mode .table thead th {
+        background-color: var(--primary-dark);
+      }
+      
+      .table tbody tr:nth-of-type(odd) {
+        background-color: rgba(0, 0, 0, 0.02);
+      }
+      
+      .dark-mode .table tbody tr:nth-of-type(odd) {
+        background-color: rgba(255, 255, 255, 0.05);
+      }
+      
+      /* Badge styles */
+      .badge {
+        font-weight: 500;
+        padding: 0.4em 0.8em;
+        border-radius: var(--radius-sm);
+      }
+      
+      /* Chart styling */
+      .chart-container {
+        border-radius: var(--radius-md);
+        padding: 15px;
+        background-color: var(--bg-white);
+        transition: background-color var(--transition-normal);
+      }
+      
+      .dark-mode .chart-container {
+        background-color: var(--dark-card-bg);
+      }
+      
+      @media (max-width: 768px) {
+        .navbar-brand {
+          font-size: 1.1rem;
+        }
+        
+        .navbar-brand img {
+          height: 35px;
+          width: 35px;
+        }
+        
+        .theme-switch-wrapper {
+          margin-top: 10px;
+        }
+      }
+    </style>
+    
+    <!-- Dark Mode Toggle Script -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Check for saved theme preference or default to light
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        const themeToggle = document.getElementById('theme-toggle');
+        
+        // Apply the saved theme on page load
+        if (savedTheme === 'dark') {
+          document.body.classList.add('dark-mode');
+          themeToggle.checked = true;
+        }
+        
+        // Theme toggle functionality
+        themeToggle.addEventListener('change', function(e) {
+          if (e.target.checked) {
+            document.body.classList.add('dark-mode');
+            localStorage.setItem('theme', 'dark');
+          } else {
+            document.body.classList.remove('dark-mode');
+            localStorage.setItem('theme', 'light');
+          }
+        });
+      });
+    </script>
   </head>
   <body>
     <!-- Loading Overlay -->
@@ -557,14 +852,18 @@ if ($page != 'beranda') {
             <li class="nav-item">
               <a class="nav-link" href="<?php echo ($page == 'beranda') ? '#program' : 'index.php#program'; ?>">Program</a>
             </li>
-            <li class="nav-item">
-              <a class="nav-link" href="<?php echo ($page == 'beranda') ? '#monitoring' : 'index.php#monitoring'; ?>">Monitoring</a>
-            </li>
+
             <li class="nav-item">
               <a class="nav-link" href="<?php echo ($page == 'beranda') ? '#publikasi' : 'index.php#publikasi'; ?>">Publikasi</a>
             </li>
             <li class="nav-item">
               <a class="nav-link" href="<?php echo ($page == 'beranda') ? '#kontak' : 'index.php#kontak'; ?>">Kontak</a>
+            </li>
+            <li class="nav-item theme-switch-wrapper">
+              <label class="theme-switch" for="theme-toggle">
+                <input type="checkbox" id="theme-toggle" />
+                <span class="slider"></span>
+              </label>
             </li>
           </ul>
         </div>

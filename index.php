@@ -42,7 +42,7 @@ if (!isset($pdo) || !($pdo instanceof PDO)) {
 $page = isset($_GET['page']) ? sanitizeInput($_GET['page']) : 'beranda';
 
 // Validasi halaman yang diizinkan
-$allowed_pages = ['beranda', 'profil', 'layanan', 'program', 'statistik', 'monitoring', 'publikasi', 'galeri', 'kontak'];
+$allowed_pages = ['beranda', 'profil', 'layanan', 'program', 'statistik', 'publikasi', 'galeri', 'kontak'];
 if (!in_array($page, $allowed_pages)) {
     $page = 'beranda';
 }
@@ -83,7 +83,6 @@ if ($page === 'beranda' || !$has_specific_view) {
     include_once 'modules/layanan.php';        // Layanan section
     include_once 'modules/program.php';        // Program section
     include_once 'modules/statistik.php';      // Statistik section
-    include_once 'modules/monitoring.php';     // Monitoring section
     include_once 'modules/publikasi.php';      // Publikasi section
     include_once 'modules/galeri.php';         // Galeri section
     include_once 'modules/kontak.php';         // Kontak section
@@ -118,9 +117,6 @@ if ($page === 'beranda' || !$has_specific_view) {
             break;
         case 'statistik':
             include_once 'modules/statistik.php';
-            break;
-        case 'monitoring':
-            include_once 'modules/monitoring.php';
             break;
         case 'kontak':
             include_once 'modules/kontak.php';
