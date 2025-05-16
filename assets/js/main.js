@@ -457,6 +457,12 @@ function initializeMap() {
 
 // Function to initialize charts
 function initializeCharts(useCustomData = false) {
+  // Skip initialization if we're on the statistics page to avoid conflicts
+  if (window.location.href.includes('?page=statistik') || 
+      window.location.href.includes('&page=statistik')) {
+    return;
+  }
+
   const forestAreaChart = document.getElementById("forestAreaChart");
   const forestProductionChart = document.getElementById(
     "forestProductionChart"

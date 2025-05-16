@@ -198,7 +198,7 @@ $featured_posts = getPosts(2, true);
 <!-- Hero Section -->
 <section class="hero-section" id="hero">
   <div class="hero-video-bg">
-    <video autoplay muted loop>
+    <video autoplay muted loop playsinline preload="auto" poster="assets/images/hero-bg.jpg">
       <source src="assets/videos/<?php echo htmlspecialchars($hero_content['background_video']); ?>" type="video/mp4">
     </video>
   </div>
@@ -241,12 +241,16 @@ $featured_posts = getPosts(2, true);
     width: 100%;
     height: 100%;
     z-index: 1;
+    overflow: hidden;
   }
   
   .hero-video-bg video {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    object-position: center;
+    filter: brightness(1.1) contrast(1.1);
+    transform: scale(1.02); /* Slightly scale the video to avoid white edges */
   }
   
   .hero-overlay {
@@ -255,8 +259,9 @@ $featured_posts = getPosts(2, true);
     left: 0;
     width: 100%;
     height: 100%;
-    background: linear-gradient(135deg, rgba(20, 102, 68, 0.7), rgba(29, 94, 94, 0.7));
+    background: linear-gradient(135deg, rgba(20, 102, 68, 0.6), rgba(29, 94, 94, 0.6));
     z-index: 2;
+    mix-blend-mode: multiply; /* This enhances the video visibility while keeping text readable */
   }
   
   .hero-content-wrapper {
@@ -283,6 +288,9 @@ $featured_posts = getPosts(2, true);
     padding: 3.5rem;
     transform: translateY(0);
     transition: transform 0.5s ease;
+    background: rgba(255, 255, 255, 0.08); /* More transparent to see the video */
+    backdrop-filter: blur(5px); /* Less blur to see the video better */
+    -webkit-backdrop-filter: blur(5px);
   }
   
   .hero-content:hover {
@@ -294,7 +302,7 @@ $featured_posts = getPosts(2, true);
     font-weight: 700;
     line-height: 1.2;
     margin-bottom: 1.5rem;
-    text-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
   }
   
   .gradient-text {
@@ -309,7 +317,8 @@ $featured_posts = getPosts(2, true);
     font-size: 1.2rem;
     line-height: 1.6;
     margin-bottom: 2rem;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    color: rgba(255, 255, 255, 0.95);
   }
   
   .hero-buttons {
@@ -386,9 +395,10 @@ $featured_posts = getPosts(2, true);
   
   /* Dark mode enhancements */
   .dark-mode .hero-overlay {
-    background: linear-gradient(135deg, rgba(13, 60, 40, 0.8), rgba(10, 50, 55, 0.8));
+    background: linear-gradient(135deg, rgba(13, 60, 40, 0.65), rgba(10, 50, 55, 0.65));
   }
   
+  /* Responsive styles */
   @media (max-width: 991px) {
     .hero-content h1 {
       font-size: 2.8rem;
@@ -397,9 +407,18 @@ $featured_posts = getPosts(2, true);
     .hero-content p {
       font-size: 1.1rem;
     }
+    
+    .hero-buttons {
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    
+    .hero-buttons .btn {
+      width: 100%;
+    }
   }
   
-  @media (max-width: 767px) {
+  @media (max-width: 768px) {
     .hero-content {
       padding: 2.5rem;
     }
@@ -407,19 +426,9 @@ $featured_posts = getPosts(2, true);
     .hero-content h1 {
       font-size: 2.2rem;
     }
-    
-    .hero-buttons {
-      flex-direction: column;
-      width: 100%;
-    }
-    
-    .hero-buttons .btn {
-      width: 100%;
-      margin-bottom: 0.5rem;
-    }
   }
   
-  @media (max-width: 480px) {
+  @media (max-width: 576px) {
     .hero-content {
       padding: 2rem 1.5rem;
     }
@@ -430,6 +439,7 @@ $featured_posts = getPosts(2, true);
     
     .hero-content p {
       font-size: 1rem;
+      margin-bottom: 1.5rem;
     }
   }
 </style>

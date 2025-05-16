@@ -63,15 +63,6 @@ if (!isset($settings) || !is_array($settings)) {
               ?>
             </ul>
           </div>
-          <div class="col-lg-3">
-            <h5>Informasi Penting</h5>
-            <ul class="footer-links">
-              <li><a href="#">Prosedur Pelayanan</a></li>
-              <li><a href="#">Standar Pelayanan</a></li>
-              <li><a href="#">Maklumat Pelayanan</a></li>
-              <li><a href="#">Peraturan Terkait</a></li>
-            </ul>
-          </div>
         </div>
       </div>
       <div class="footer-bottom mt-4">
@@ -82,10 +73,6 @@ if (!isset($settings) || !is_array($settings)) {
                 &copy; <?php echo date('Y'); ?> CDK Wilayah Bojonegoro. Hak Cipta Dilindungi.
               </p>
             </div>
-            <div class="col-md-6 text-md-end">
-              <a href="#" class="text-white me-3">Kebijakan Privasi</a>
-              <a href="#" class="text-white">Syarat & Ketentuan</a>
-            </div>
           </div>
         </div>
       </div>
@@ -95,6 +82,14 @@ if (!isset($settings) || !is_array($settings)) {
     <button id="backToTop" class="back-to-top">
       <i class="fas fa-arrow-up"></i>
     </button>
+
+    <!-- Theme Toggle Button (Floating) -->
+    <div class="theme-toggle-float">
+      <button id="theme-toggle-float" class="theme-toggle-btn" aria-label="Toggle Dark Mode">
+        <i class="ri-sun-line sun-icon"></i>
+        <i class="ri-moon-line moon-icon"></i>
+      </button>
+    </div>
 
     <!-- Modal Preview Image -->
     <div class="modal-preview" id="imageModal" style="display: none;">
@@ -251,18 +246,156 @@ if (!isset($settings) || !is_array($settings)) {
             const scrollDepth = Math.floor((window.scrollY / scrollHeight) * 100);
             if (scrollDepth > maxScrollDepth) {
               maxScrollDepth = scrollDepth;
-              
-              // Send to analytics if needed
-              if (typeof gtag === 'function' && scrollDepth % 25 === 0) { // Report at 25%, 50%, 75%, 100%
-                gtag('event', 'scroll_depth', {
-                  'depth': scrollDepth,
-                  'page': window.location.pathname
-                });
-              }
+              // Can send to analytics here
             }
           }
-        }, 500));
+        }, 250));
+        
+        // Helper function for debounce
+        function debounce(func, wait) {
+          let timeout;
+          return function(...args) {
+            const context = this;
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(context, args), wait);
+          };
+        }
+      });
+
+      // Initialize floating theme toggle button
+      document.addEventListener('DOMContentLoaded', function() {
+        const themeToggleFloat = document.getElementById('theme-toggle-float');
+        const navbarThemeToggle = document.getElementById('theme-toggle');
+        
+        if (themeToggleFloat && navbarThemeToggle) {
+          themeToggleFloat.addEventListener('click', function() {
+            // Toggle the navbar toggle to keep them in sync
+            navbarThemeToggle.checked = !navbarThemeToggle.checked;
+            
+            // Trigger the change event on the navbar toggle
+            const event = new Event('change');
+            navbarThemeToggle.dispatchEvent(event);
+            
+            // Add animation effect
+            this.classList.add('clicked');
+            setTimeout(() => {
+              this.classList.remove('clicked');
+            }, 300);
+          });
+        }
+        
+        // Check saved theme on page load
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        if (savedTheme === 'dark') {
+          document.body.classList.add('dark-mode');
+          if (navbarThemeToggle) {
+            navbarThemeToggle.checked = true;
+          }
+        }
       });
     </script>
+
+    <style>
+      /* Floating Theme Toggle Button */
+      .theme-toggle-float {
+        position: fixed;
+        bottom: 80px;
+        right: 20px;
+        z-index: 999;
+      }
+      
+      .theme-toggle-btn {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        color: #fff;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+      
+      .theme-toggle-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        transform: scale(0);
+        transition: transform 0.5s ease;
+      }
+      
+      .theme-toggle-btn:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+      }
+      
+      .theme-toggle-btn:hover::before {
+        transform: scale(1.5);
+        opacity: 0;
+      }
+      
+      .sun-icon, .moon-icon {
+        position: absolute;
+        font-size: 1.5rem;
+        transition: opacity 0.3s ease, transform 0.5s ease;
+      }
+      
+      .sun-icon {
+        opacity: 0;
+        transform: rotate(90deg) scale(0);
+      }
+      
+      .moon-icon {
+        opacity: 1;
+        transform: rotate(0) scale(1);
+      }
+      
+      .dark-mode .sun-icon {
+        opacity: 1;
+        transform: rotate(0) scale(1);
+      }
+      
+      .dark-mode .moon-icon {
+        opacity: 0;
+        transform: rotate(-90deg) scale(0);
+      }
+      
+      /* Animation when clicked */
+      .theme-toggle-btn.clicked {
+        animation: pulse 0.3s ease;
+      }
+      
+      @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.15); }
+        100% { transform: scale(1); }
+      }
+      
+      @media (max-width: 768px) {
+        .theme-toggle-float {
+          bottom: 75px;
+          right: 15px;
+        }
+        
+        .theme-toggle-btn {
+          width: 40px;
+          height: 40px;
+        }
+        
+        .sun-icon, .moon-icon {
+          font-size: 1.3rem;
+        }
+      }
+    </style>
   </body>
 </html>

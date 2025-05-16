@@ -109,13 +109,16 @@ try {
                 $chart_count = $index + 1;
                 $delay = $index * 100;
                 ?>
-                <div class="col-lg-6 mb-4">
-                    <div class="statistic-card h-100">
+                <div class="col-lg-6">
+                    <div class="statistic-card">
                         <div class="card-header d-flex justify-content-between align-items-center">
                             <h4><?php echo htmlspecialchars($statistic['title']); ?></h4>
+                            <?php if (!empty($statistic['unit'])): ?>
+                            <span class="badge bg-light text-dark"><?php echo htmlspecialchars($statistic['unit']); ?></span>
+                            <?php endif; ?>
                         </div>
                         <div class="card-body">
-                            <div class="chart-container">
+                            <div class="chart-container" data-chart-id="<?php echo $chart_id; ?>">
                                 <canvas id="<?php echo $chart_id; ?>"></canvas>
                             </div>
                         </div>
@@ -130,13 +133,18 @@ try {
 <!-- Script untuk inisialisasi chart -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM Content Loaded - Initializing Statistics Charts');
+    
     // Cek apakah Chart.js tersedia
     if (typeof Chart === 'undefined') {
+        console.error('Chart.js is not available');
         document.querySelectorAll('.chart-container').forEach(container => {
             container.innerHTML = '<div class="alert alert-warning">Chart tidak dapat dimuat. Chart.js tidak tersedia.</div>';
         });
         return;
     }
+    
+    console.log('Chart.js is available');
     
     // Modern color palettes
     const modernColorSets = [
@@ -226,182 +234,316 @@ document.addEventListener('DOMContentLoaded', function() {
         ?>
     };
     
+    console.log('Chart data prepared:', Object.keys(chartData).length, 'charts');
+    
     // Chart instances by ID for reference
     const charts = {};
     
-    // Function to create or update charts
-    function createOrUpdateCharts() {
-        Object.keys(chartData).forEach(chartId => {
-            const canvas = document.getElementById(chartId);
-            if (!canvas) {
-                return;
-            }
+    // Function to add a temporary border to debug element sizing
+    function addDebugBorder(element, color = 'red') {
+        const originalBorder = element.style.border;
+        element.style.border = `2px solid ${color}`;
+        setTimeout(() => {
+            element.style.border = originalBorder;
+        }, 5000);
+    }
+    
+    // Wait a short moment to ensure DOM is fully ready
+    setTimeout(function() {
+        try {
+            console.log('Starting chart initialization');
             
-            const data = chartData[chartId];
-            const ctx = canvas.getContext('2d');
-            
-            // Get colors based on current theme
-            const colors = getColorScheme(data.colorSetIndex);
-            // Ensure we have enough colors for all data points
-            while (colors.length < data.data.length) {
-                colors.push(...colors);
-            }
-            
-            // Use only the colors we need
-            const finalColors = colors.slice(0, data.data.length);
-            
-            // If chart already exists, update it
-            if (charts[chartId]) {
-                const chart = charts[chartId];
-                chart.data.datasets[0].backgroundColor = finalColors;
-                chart.update();
-                return;
-            }
-            
-            // Otherwise create a new chart
-            const chart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: data.labels,
-                    datasets: [{
-                        label: data.title,
-                        data: data.data,
-                        backgroundColor: finalColors,
-                        borderWidth: 0,
-                        borderRadius: 6,
-                        hoverBorderWidth: 1,
-                        hoverBorderColor: 'rgba(255, 255, 255, 0.5)',
-                        barPercentage: 0.7
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    animation: {
-                        duration: 1000,
-                        easing: 'easeOutQuart'
-                    },
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        title: {
-                            display: true,
-                            text: data.title + (data.unit ? ` (${data.unit})` : ''),
-                            font: {
-                                size: 16,
-                                family: "'Poppins', sans-serif",
-                                weight: 'bold'
+            // Function to create or update charts
+            function createOrUpdateCharts() {
+                Object.keys(chartData).forEach(chartId => {
+                    try {
+                        const canvas = document.getElementById(chartId);
+                        if (!canvas) {
+                            console.warn(`Canvas element with ID ${chartId} not found`);
+                            return;
+                        }
+                        
+                        console.log(`Initializing chart: ${chartId}`);
+                        
+                        // Debug element sizes
+                        const container = canvas.closest('.chart-container');
+                        const cardBody = canvas.closest('.card-body');
+                        console.log(`Canvas dimensions: ${canvas.clientWidth}x${canvas.clientHeight}`);
+                        if (container) console.log(`Container dimensions: ${container.clientWidth}x${container.clientHeight}`);
+                        if (cardBody) console.log(`Card body dimensions: ${cardBody.clientWidth}x${cardBody.clientHeight}`);
+                        
+                        // Add temporary debug borders
+                        addDebugBorder(canvas, 'blue');
+                        if (container) addDebugBorder(container, 'green');
+                        if (cardBody) addDebugBorder(cardBody, 'orange');
+                        
+                        const data = chartData[chartId];
+                        console.log(`Chart data for ${chartId}:`, data);
+                        
+                        const ctx = canvas.getContext('2d');
+                        
+                        // Get colors based on current theme
+                        const colors = getColorScheme(data.colorSetIndex);
+                        // Ensure we have enough colors for all data points
+                        while (colors.length < data.data.length) {
+                            colors.push(...colors);
+                        }
+                        
+                        // Use only the colors we need
+                        const finalColors = colors.slice(0, data.data.length);
+                        
+                        // If chart already exists, destroy it first to prevent conflicts
+                        if (charts[chartId]) {
+                            console.log(`Destroying existing chart: ${chartId}`);
+                            charts[chartId].destroy();
+                            delete charts[chartId];
+                        }
+                        
+                        // Ensure the canvas is properly reset
+                        canvas.width = canvas.clientWidth * window.devicePixelRatio;
+                        canvas.height = canvas.clientHeight * window.devicePixelRatio;
+                        canvas.style.width = canvas.clientWidth + 'px';
+                        canvas.style.height = canvas.clientHeight + 'px';
+                        
+                        // Create a new chart
+                        console.log(`Creating new chart: ${chartId}`);
+                        const chart = new Chart(ctx, {
+                            type: 'bar',
+                            data: {
+                                labels: data.labels,
+                                datasets: [{
+                                    label: data.title,
+                                    data: data.data,
+                                    backgroundColor: finalColors,
+                                    borderColor: finalColors.map(color => color.replace('0.8', '1')),
+                                    borderWidth: 1,
+                                    borderRadius: 6,
+                                    hoverBorderWidth: 2,
+                                    hoverBorderColor: 'rgba(255, 255, 255, 0.7)',
+                                    barPercentage: 0.6,
+                                    maxBarThickness: 50,
+                                    borderSkipped: false, // Rounded corners on all sides
+                                    hoverBackgroundColor: finalColors.map(color => color.replace('0.8', '0.9')),
+                                }]
                             },
-                            color: document.body.classList.contains('dark-mode') ? '#e5e7eb' : '#1a2c2f',
-                            padding: 20
-                        },
-                        tooltip: {
-                            backgroundColor: document.body.classList.contains('dark-mode') ? 'rgba(30, 35, 40, 0.8)' : 'rgba(255, 255, 255, 0.9)',
-                            titleColor: document.body.classList.contains('dark-mode') ? '#fff' : '#1a2c2f',
-                            bodyColor: document.body.classList.contains('dark-mode') ? '#e5e7eb' : '#4d6369',
-                            bodyFont: {
-                                family: "'Poppins', sans-serif"
-                            },
-                            padding: 12,
-                            borderWidth: 1,
-                            borderColor: document.body.classList.contains('dark-mode') ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
-                            cornerRadius: 8,
-                            boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)',
-                            callbacks: {
-                                label: function(context) {
-                                    let label = context.dataset.label || '';
-                                    if (label) {
-                                        label += ': ';
-                                    }
-                                    if (context.parsed.y !== null) {
-                                        label += context.parsed.y.toLocaleString('id-ID');
-                                        if (data.unit) {
-                                            label += ' ' + data.unit;
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                animation: {
+                                    delay: function(context) {
+                                        // Add sequential animation to each bar
+                                        return context.dataIndex * 100;
+                                    },
+                                    duration: 1000,
+                                    easing: 'easeOutQuart'
+                                },
+                                plugins: {
+                                    legend: {
+                                        display: false
+                                    },
+                                    title: {
+                                        display: true,
+                                        text: data.title + (data.unit ? ` (${data.unit})` : ''),
+                                        font: {
+                                            size: 16,
+                                            family: "'Poppins', sans-serif",
+                                            weight: 'bold'
+                                        },
+                                        color: document.body.classList.contains('dark-mode') ? '#e5e7eb' : '#1a2c2f',
+                                        padding: 20
+                                    },
+                                    tooltip: {
+                                        enabled: true,
+                                        backgroundColor: document.body.classList.contains('dark-mode') ? 'rgba(42, 42, 42, 0.9)' : 'rgba(255, 255, 255, 0.95)',
+                                        titleColor: document.body.classList.contains('dark-mode') ? '#fff' : '#1a2c2f',
+                                        bodyColor: document.body.classList.contains('dark-mode') ? '#e5e7eb' : '#4d6369',
+                                        titleFont: {
+                                            family: "'Poppins', sans-serif",
+                                            weight: 'bold',
+                                            size: 14
+                                        },
+                                        bodyFont: {
+                                            family: "'Poppins', sans-serif",
+                                            size: 13
+                                        },
+                                        padding: 14,
+                                        borderWidth: 1,
+                                        borderColor: document.body.classList.contains('dark-mode') ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
+                                        cornerRadius: 12,
+                                        displayColors: true,
+                                        boxWidth: 10,
+                                        boxHeight: 10,
+                                        boxPadding: 3,
+                                        usePointStyle: true,
+                                        callbacks: {
+                                            label: function(context) {
+                                                let label = context.dataset.label || '';
+                                                if (label) {
+                                                    label += ': ';
+                                                }
+                                                if (context.parsed.y !== null) {
+                                                    label += context.parsed.y.toLocaleString('id-ID');
+                                                    if (data.unit) {
+                                                        label += ' ' + data.unit;
+                                                    }
+                                                }
+                                                return label;
+                                            }
                                         }
                                     }
-                                    return label;
+                                },
+                                interaction: {
+                                    mode: 'index',
+                                    intersect: false,
+                                },
+                                layout: {
+                                    padding: {
+                                        left: 10,
+                                        right: 10,
+                                        top: 0,
+                                        bottom: 10
+                                    }
+                                },
+                                scales: {
+                                    y: {
+                                        beginAtZero: true,
+                                        grid: {
+                                            color: document.body.classList.contains('dark-mode') ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)',
+                                            drawBorder: false,
+                                            lineWidth: 1
+                                        },
+                                        border: {
+                                            display: false
+                                        },
+                                        ticks: {
+                                            font: {
+                                                family: "'Poppins', sans-serif",
+                                                size: 12
+                                            },
+                                            color: document.body.classList.contains('dark-mode') ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.6)',
+                                            padding: 10,
+                                            callback: function(value) {
+                                                return value.toLocaleString('id-ID');
+                                            }
+                                        }
+                                    },
+                                    x: {
+                                        grid: {
+                                            display: false,
+                                            drawBorder: false
+                                        },
+                                        border: {
+                                            display: false
+                                        },
+                                        ticks: {
+                                            font: {
+                                                family: "'Poppins', sans-serif",
+                                                size: 12
+                                            },
+                                            color: document.body.classList.contains('dark-mode') ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.6)',
+                                            padding: 5,
+                                            maxRotation: 45,
+                                            minRotation: 0
+                                        }
+                                    }
                                 }
                             }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                color: document.body.classList.contains('dark-mode') ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
-                                drawBorder: false
-                            },
-                            ticks: {
-                                font: {
-                                    family: "'Poppins', sans-serif"
-                                },
-                                color: document.body.classList.contains('dark-mode') ? '#9ca3af' : '#4d6369',
-                                padding: 10,
-                                callback: function(value) {
-                                    return value.toLocaleString('id-ID');
-                                }
-                            }
-                        },
-                        x: {
-                            grid: {
-                                display: false,
-                                drawBorder: false
-                            },
-                            ticks: {
-                                font: {
-                                    family: "'Poppins', sans-serif"
-                                },
-                                color: document.body.classList.contains('dark-mode') ? '#9ca3af' : '#4d6369',
-                                padding: 10
+                        });
+                        
+                        // Store chart instance for future updates
+                        charts[chartId] = chart;
+                        console.log(`Chart created successfully: ${chartId}`);
+                    } catch (chartError) {
+                        console.error(`Error creating chart ${chartId}:`, chartError);
+                        const canvas = document.getElementById(chartId);
+                        if (canvas) {
+                            const container = canvas.closest('.chart-container');
+                            if (container) {
+                                container.innerHTML = `<div class="alert alert-danger">Error loading chart: ${chartError.message}</div>`;
                             }
                         }
                     }
-                }
+                });
+            }
+            
+            // Create initial charts
+            createOrUpdateCharts();
+            
+            // Make charts globally available for potential updates
+            window.statisticsCharts = charts;
+            
+            // Update charts when theme changes - from navbar toggle
+            document.getElementById('theme-toggle')?.addEventListener('change', function() {
+                // Give time for the dark-mode class to be applied
+                setTimeout(function() {
+                    updateChartsForTheme();
+                }, 50);
             });
             
-            // Store chart instance for future updates
-            charts[chartId] = chart;
-        });
-    }
-    
-    // Create initial charts
-    createOrUpdateCharts();
-    
-    // Update charts when theme changes
-    document.getElementById('theme-toggle')?.addEventListener('change', function() {
-        // Give time for the dark-mode class to be applied
-        setTimeout(function() {
-            Object.values(charts).forEach(chart => {
-                // Update title color
-                chart.options.plugins.title.color = document.body.classList.contains('dark-mode') ? '#e5e7eb' : '#1a2c2f';
-                
-                // Update tooltip style
-                chart.options.plugins.tooltip.backgroundColor = document.body.classList.contains('dark-mode') ? 'rgba(30, 35, 40, 0.8)' : 'rgba(255, 255, 255, 0.9)';
-                chart.options.plugins.tooltip.titleColor = document.body.classList.contains('dark-mode') ? '#fff' : '#1a2c2f';
-                chart.options.plugins.tooltip.bodyColor = document.body.classList.contains('dark-mode') ? '#e5e7eb' : '#4d6369';
-                chart.options.plugins.tooltip.borderColor = document.body.classList.contains('dark-mode') ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
-                
-                // Update scales
-                chart.options.scales.y.grid.color = document.body.classList.contains('dark-mode') ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)';
-                chart.options.scales.y.ticks.color = document.body.classList.contains('dark-mode') ? '#9ca3af' : '#4d6369';
-                chart.options.scales.x.ticks.color = document.body.classList.contains('dark-mode') ? '#9ca3af' : '#4d6369';
-                
-                // Update chart colors
-                const chartId = chart.canvas.id;
-                const data = chartData[chartId];
-                const colors = getColorScheme(data.colorSetIndex);
-                
-                // Ensure we have enough colors
-                while (colors.length < data.data.length) {
-                    colors.push(...colors);
-                }
-                
-                chart.data.datasets[0].backgroundColor = colors.slice(0, data.data.length);
-                chart.update();
+            // Also listen for theme change from floating toggle button
+            document.getElementById('theme-toggle-float')?.addEventListener('click', function() {
+                // Give time for the dark-mode class to be applied
+                setTimeout(function() {
+                    updateChartsForTheme();
+                }, 50);
             });
-        }, 50);
-    });
+            
+            function updateChartsForTheme() {
+                try {
+                    Object.values(charts).forEach(chart => {
+                        // Update title color
+                        chart.options.plugins.title.color = document.body.classList.contains('dark-mode') ? '#e5e7eb' : '#1a2c2f';
+                        
+                        // Update tooltip style
+                        chart.options.plugins.tooltip.backgroundColor = document.body.classList.contains('dark-mode') ? 'rgba(30, 35, 40, 0.8)' : 'rgba(255, 255, 255, 0.9)';
+                        chart.options.plugins.tooltip.titleColor = document.body.classList.contains('dark-mode') ? '#fff' : '#1a2c2f';
+                        chart.options.plugins.tooltip.bodyColor = document.body.classList.contains('dark-mode') ? '#e5e7eb' : '#4d6369';
+                        chart.options.plugins.tooltip.borderColor = document.body.classList.contains('dark-mode') ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+                        
+                        // Update scales
+                        chart.options.scales.y.grid.color = document.body.classList.contains('dark-mode') ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)';
+                        chart.options.scales.y.ticks.color = document.body.classList.contains('dark-mode') ? '#9ca3af' : '#4d6369';
+                        chart.options.scales.x.ticks.color = document.body.classList.contains('dark-mode') ? '#9ca3af' : '#4d6369';
+                        
+                        // Update chart colors
+                        const chartId = chart.canvas.id;
+                        const data = chartData[chartId];
+                        const colors = getColorScheme(data.colorSetIndex);
+                        
+                        // Ensure we have enough colors
+                        while (colors.length < data.data.length) {
+                            colors.push(...colors);
+                        }
+                        
+                        chart.data.datasets[0].backgroundColor = colors.slice(0, data.data.length);
+                        chart.update();
+                    });
+                } catch (e) {
+                    console.error("Error updating charts for theme change:", e);
+                }
+            }
+            
+            // Redraw charts when window is resized
+            let resizeTimer;
+            window.addEventListener('resize', function() {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(function() {
+                    Object.values(charts).forEach(chart => {
+                        try {
+                            chart.resize();
+                        } catch (e) {
+                            console.warn("Error resizing chart:", e);
+                        }
+                    });
+                }, 250);
+            });
+        } catch (error) {
+            console.error("Error initializing statistics charts:", error);
+            document.querySelectorAll('.chart-container').forEach(container => {
+                container.innerHTML = `<div class="alert alert-danger">Error initializing charts: ${error.message}</div>`;
+            });
+        }
+    }, 100); // Short delay to ensure DOM is ready
 });
 </script>
 
@@ -412,22 +554,29 @@ document.addEventListener('DOMContentLoaded', function() {
     margin-bottom: 24px;
     overflow: hidden;
     border: none;
-    background-color: var(--bg-white);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    background-color: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1), box-shadow 0.4s ease;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
 }
 
 .statistic-card:hover {
-    transform: translateY(-5px);
-    box-shadow: var(--shadow-lg);
+    transform: translateY(-8px);
+    box-shadow: 0 15px 35px rgba(45, 106, 79, 0.15);
 }
 
 .statistic-card .card-header {
-    background: linear-gradient(90deg, var(--primary-color), var(--primary-light));
-    padding: 18px 24px;
+    background: linear-gradient(120deg, var(--primary-color), var(--primary-light));
+    padding: 20px 24px;
     border: none;
     color: white;
     position: relative;
     overflow: hidden;
+    flex-shrink: 0;
 }
 
 .statistic-card .card-header::before {
@@ -437,42 +586,185 @@ document.addEventListener('DOMContentLoaded', function() {
     right: 0;
     height: 100%;
     width: 35%;
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.15);
     clip-path: polygon(100% 0, 0 0, 100% 100%);
+    transition: transform 0.5s ease;
+}
+
+.statistic-card:hover .card-header::before {
+    transform: translateX(-10px);
+}
+
+.statistic-card .card-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.5), transparent);
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+
+.statistic-card:hover .card-header::after {
+    opacity: 1;
 }
 
 .statistic-card .card-header h4 {
     margin-bottom: 0;
     font-weight: 600;
     position: relative;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+    font-size: 1.25rem;
 }
 
 .statistic-card .card-body {
-    padding: 24px;
+    padding: 10px;
     height: 340px;
-    background-color: var(--bg-white);
+    background-color: rgba(255, 255, 255, 0);
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-grow: 1;
+    min-height: 340px;
+    overflow: hidden;
+    position: relative;
 }
 
 .chart-container {
     width: 100%;
     height: 100%;
-    padding: 10px;
+    position: relative;
+    transition: all 0.3s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 300px;
+}
+
+/* Make sure the Canvas is block-level and takes full space */
+.chart-container canvas {
+    display: block !important;
+    box-sizing: border-box !important;
+    height: 100% !important;
+    width: 100% !important;
+    min-height: 300px;
+}
+
+.statistic-card:hover .chart-container {
+    transform: scale(1.02);
+}
+
+/* Fixed height to ensure consistent display */
+@media (min-width: 992px) {
+    .statistic-card .card-body,
+    .chart-container,
+    .chart-container canvas {
+        height: 360px !important;
+        min-height: 360px !important;
+    }
 }
 
 /* Dark mode styling */
 .dark-mode .statistic-card {
-    background-color: var(--dark-card-bg);
+    background-color: rgba(42, 42, 42, 0.85);
     border-color: var(--dark-border);
+    border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .dark-mode .statistic-card .card-body {
-    background-color: var(--dark-card-bg);
+    background-color: transparent;
 }
 
 .dark-mode .statistic-card .card-header {
-    background: linear-gradient(90deg, var(--primary-dark), var(--primary-color));
+    background: linear-gradient(120deg, var(--primary-dark), var(--primary-color));
+}
+
+/* Alert message styling */
+.chart-container .alert {
+    margin: 0;
+    width: 100%;
+    text-align: center;
+}
+
+/* Make sure we have equal height rows */
+.statistics-section .row {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.statistics-section .row > [class*="col-"] {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 24px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .statistic-card .card-body {
+        height: 300px;
+        min-height: 300px;
+        padding: 10px;
+    }
+    
+    .statistic-card .card-header {
+        padding: 15px;
+    }
+    
+    .statistic-card .card-header h4 {
+        font-size: 1.1rem;
+    }
+    
+    .chart-container,
+    .chart-container canvas {
+        min-height: 260px;
+        height: 260px !important;
+    }
+}
+
+/* Loading state for charts */
+.chart-container.loading {
+    position: relative;
+}
+
+.chart-container.loading::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 40px;
+    height: 40px;
+    margin: -20px 0 0 -20px;
+    border: 5px solid var(--primary-light);
+    border-top: 5px solid var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Fix for Chart.js specific issues */
+.chart-container {
+    position: relative;
+}
+
+.chart-container::before {
+    content: "";
+    display: block;
+    padding-top: 60%;
+}
+
+.chart-container > canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
 }
 </style>
